@@ -13,5 +13,17 @@
     "astro": "^5.13.5",
     "daisyui": "^5.1.12",
     "tailwindcss": "^4.1.13"
-  }
+  },
+  "description": "- Nom:\r - Prenom:\r - Netlify:",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/R312-jbassil/r312-tp-svg-Bryan-Menoux.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/R312-jbassil/r312-tp-svg-Bryan-Menoux/issues"
+  },
+  "homepage": "https://github.com/R312-jbassil/r312-tp-svg-Bryan-Menoux#readme"
 }

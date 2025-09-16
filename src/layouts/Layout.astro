@@ -1,20 +1,21 @@
 ---
 import "../styles/global.css";
 ---
+
 <!doctype html>
-<html lang="en" data-theme="light" class="h-full">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body class="h-full">
-		<div class="h-full flex flex-col min-h-0">
-			<div class="flex-1 min-h-0">
-				<slot />
-			</div>
-		</div>
-	</body>
+<html lang="en" data-theme="light" class="h-full" data-theme="dracula">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro Basics</title>
+  </head>
+  <body class="h-full">
+    <div class="h-full flex flex-col min-h-0">
+      <div class="flex-1 min-h-0">
+        <slot />
+      </div>
+    </div>
+  </body>
 </html>
