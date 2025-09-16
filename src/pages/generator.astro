@@ -25,21 +25,39 @@ import Layout from "../layouts/Layout.astro";
     </div>
 
     <div
-      class="flex gap-2 bg-base-100 rounded-2xl p-2 border-2 border-violet-500"
+      class="flex gap-2 bg-base-100 rounded-2xl p-2 border-2 border-violet-500 items-center"
     >
-      <input
-        id="user-prompt"
-        type="text"
-        placeholder="Décrivez votre SVG..."
-        class="input input-bordered flex-1"
-      />
-      <button id="generate-button" class="btn btn-primary">Générer</button>
+      <!-- zone normale -->
+      <div id="normal-zone" class="flex w-full gap-2">
+        <input
+          id="user-prompt"
+          type="text"
+          placeholder="Décrivez votre SVG..."
+          class="input input-bordered flex-1"
+        />
+        <button id="generate-button" class="btn btn-primary">Générer</button>
+        <button id="favorite-button" class="btn btn-secondary">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="white"
+            viewBox="0 0 30 30"
+          >
+            <path
+              d="M23,27l-8-7l-8,7V5c0-1.105,0.895-2,2-2h12c1.105,0,2,0.895,2,2V27z"
+            ></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </Layout>
 
 <script>
   //@ts-nocheck
+  import { createNewFavorite } from "../lib/pocketbase";
+
   async function generateSVG(prompt) {
     const res = await fetch("/api/generateSVG", {
       method: "POST",
@@ -67,6 +85,7 @@ import Layout from "../layouts/Layout.astro";
       svgContainer.innerHTML =
         svg || `<span class="text-zinc-400">Aucun SVG</span>`;
       svgOutput.textContent = svg;
+      input.value = "";
     } finally {
       generateButton.disabled = false;
     }
@@ -77,6 +96,81 @@ import Layout from "../layouts/Layout.astro";
   generateButton.addEventListener("click", handleSubmit);
   input.addEventListener("keypress", (e) => {
     if (e.key === "Enter") handleSubmit();
-    input.value = "";
+  });
+
+  const favoriteButton = document.getElementById("favorite-button");
+  const actionZone = document.getElementById("normal-zone");
+  const svgOutput = document.getElementById("svg-output");
+
+  const successDiv = document.createElement("div");
+  successDiv.className =
+    "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-500 z-50";
+  successDiv.textContent = "Favori enregistré avec succès !";
+  document.body.appendChild(successDiv);
+
+  function showSuccess() {
+    successDiv.classList.remove("opacity-0");
+    successDiv.classList.add("opacity-100");
+    setTimeout(() => {
+      successDiv.classList.remove("opacity-100");
+      successDiv.classList.add("opacity-0");
+    }, 5000);
+  }
+
+  favoriteButton?.addEventListener("click", () => {
+    const svgCode = svgOutput.textContent.trim();
+    if (!svgCode) return;
+
+    if (document.getElementById("fav-zone")) return;
+
+    actionZone.classList.add("hidden");
+
+    const favZone = document.createElement("div");
+    favZone.id = "fav-zone";
+    favZone.className = "flex gap-2 w-full animate-fadeIn";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "Nom du favori...";
+    nameInput.className = "input input-bordered flex-1";
+
+    const validateBtn = document.createElement("button");
+    validateBtn.textContent = "Valider";
+    validateBtn.className = "btn btn-success";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Annuler";
+    cancelBtn.className = "btn btn-error";
+
+    favZone.appendChild(nameInput);
+    favZone.appendChild(validateBtn);
+    favZone.appendChild(cancelBtn);
+    actionZone.parentNode.insertBefore(favZone, actionZone.nextSibling);
+
+    nameInput.focus();
+
+    async function saveFavorite() {
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      try {
+        await createNewFavorite(name, svgCode);
+        favZone.remove();
+        actionZone.classList.remove("hidden");
+        showSuccess();
+      } catch (err) {
+        console.error("Erreur enregistrement favori:", err);
+      }
+    }
+
+    validateBtn.addEventListener("click", saveFavorite);
+    nameInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") saveFavorite();
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      favZone.remove();
+      actionZone.classList.remove("hidden");
+    });
   });
 </script>

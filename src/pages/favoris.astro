@@ -1,0 +1,89 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getAllFavorites } from "../lib/pocketbase";
+
+// charger les favoris au rendu de la page
+let favorites = await getAllFavorites();
+---
+
+
+<Layout>
+  <div class="flex flex-col gap-6 bg-base-200 min-h-screen p-6">
+    <h1 class="text-3xl font-bold text-violet-400">🌟 Mes Favoris</h1>
+
+    {
+      favorites.length === 0 ? (
+        <div class="alert alert-info shadow-lg">
+          <span class="text-zinc-700">Aucun favori enregistré.</span>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {favorites.map((fav) => (
+            <div class="card bg-base-100 border-2 border-violet-500 shadow-xl h-full">
+              <!-- Zone d’affichage SVG -->
+              <div class="bg-zinc-900 flex items-center justify-center aspect-video overflow-hidden rounded-t-xl">
+                <div
+                  class="max-w-full max-h-full"
+                  set:html={fav.contenu_svg}
+                ></div>
+              </div>
+
+              <!-- Contenu texte -->
+              <div class="card-body flex flex-col justify-between border-t border-violet-500">
+                <div>
+                  <h2 class="card-title">
+                    <span class="badge badge-secondary">{fav.nom_favori}</span>
+                  </h2>
+                  <p class="text-xs text-zinc-500 mt-1">
+                    Ajouté le {new Date(fav.created).toLocaleString("fr-FR")}
+                  </p>
+                </div>
+                <div class="card-actions justify-end">
+                  <button
+                    class="btn btn-error btn-sm delete-button"
+                    data-id={fav.id}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</Layout>
+
+
+<script>
+  //@ts-nocheck
+  import { deleteFavorite } from "../lib/pocketbase";
+
+  let currentId = null;
+  const modal = document.getElementById("confirm-modal");
+  const confirmBtn = document.getElementById("confirm-delete");
+  const cancelBtn = document.getElementById("cancel-delete");
+
+  document.querySelectorAll(".delete-button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentId = btn.dataset.id;
+      modal.showModal();
+    });
+  });
+
+  confirmBtn.addEventListener("click", async () => {
+    if (!currentId) return;
+    try {
+      await deleteFavorite(currentId);
+      location.reload();
+    } catch (err) {
+      console.error("Erreur suppression favori:", err);
+    }
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    currentId = null;
+    modal.close();
+  });
+</script>
