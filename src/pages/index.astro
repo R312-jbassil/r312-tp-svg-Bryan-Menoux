@@ -1,5 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { ui } from "../i18n/ui.js";
+
+const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 ---
 
 <Layout>
@@ -7,11 +10,11 @@ import Layout from "../layouts/Layout.astro";
     class="flex flex-col h-full items-center justify-center glass bg-primary"
   >
     <h1 class="text-4xl font-bold mb-4 text-primary-content">
-      Welcome to SVG Generator
+      {ui[locale].index.title}
     </h1>
     <p class="mb-6 text-lg text-primary-content">
-      Create and render SVGs from prompts.
+      {ui[locale].index.description}
     </p>
-    <a href="generator" class="btn btn-secondary">Go to SVG Generator</a>
+    <a href="generator" class="btn btn-secondary">{ui[locale].index.button}</a>
   </div>
 </Layout>

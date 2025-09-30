@@ -1,0 +1,299 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import pb from "../../lib/pocketbase";
+import { type SvgRecord } from "../../utils/pocketbase-types";
+
+const id = Astro.params.id;
+
+if (!id) {
+  return Astro.redirect("/gallery");
+}
+
+let svg: SvgRecord | null = null;
+try {
+  svg = await pb.collection("svg").getOne(id);
+} catch (error) {
+  console.error("Erreur lors de la récupération du SVG:", error);
+  return Astro.redirect("/gallery");
+}
+---
+
+<Layout>
+  <div
+    class="flex flex-row items-stretch justify-center min-h-screen gap-6 p-6 bg-base-200"
+  >
+    <div
+      id="svg-container"
+      class="card shadow-xl bg-base-100 border-2 border-primary rounded-3xl flex items-center justify-center"
+      style="width: 45vw; height: calc(100vh - 3rem);"
+    >
+      {
+        svg ? (
+          <div class="max-w-full max-h-full" set:html={svg.code_svg} />
+        ) : (
+          <span class="text-error">SVG introuvable.</span>
+        )
+      }
+    </div>
+
+    <div class="flex flex-col" style="width: 45vw; height: calc(100vh - 3rem);">
+      <div
+        id="chat-history"
+        class="card shadow-xl bg-base-100 border border-base-300 rounded-t-3xl flex flex-col gap-4 flex-1 p-8 overflow-y-auto"
+      >
+        {
+          svg && svg.chat_history ? (
+            (() => {
+              try {
+                const history =
+                  typeof svg.chat_history === "string"
+                    ? JSON.parse(svg.chat_history)
+                    : svg.chat_history;
+
+                return Array.isArray(history) && history.length > 0 ? (
+                  history.map(
+                    (msg: { role: string; content: string }, idx: number) => (
+                      <div
+                        class={`chat ${msg.role === "user" ? "chat-end" : "chat-start"}`}
+                      >
+                        <div class="flex items-end gap-2">
+                          {msg.role === "user" ? null : (
+                            <div class="avatar">
+                              <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                                <img src="/favicon.svg" alt="Bot" />
+                              </div>
+                            </div>
+                          )}
+                          <div
+                            class={`chat-bubble break-words whitespace-pre-wrap max-w-full ${msg.role === "user" ? "bg-primary text-primary-content" : "bg-secondary text-secondary-content"}`}
+                          >
+                            <pre class="break-words whitespace-pre-wrap max-w-full bg-transparent border-none p-0 m-0 font-sans text-base">
+                              {msg.content}
+                            </pre>
+                          </div>
+                          {msg.role === "user" ? (
+                            <div class="avatar">
+                              <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                                <img
+                                  src="https://api.dicebear.com/7.x/personas/svg?seed=user"
+                                  alt="User"
+                                />
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div class="chat-footer opacity-60 text-xs mt-1 text-right ml-10">
+                          {msg.role}
+                        </div>
+                      </div>
+                    )
+                  )
+                ) : (
+                  <span class="text-warning">
+                    Aucun historique de chat disponible.
+                  </span>
+                );
+              } catch (error) {
+                return (
+                  <span class="text-error">
+                    Erreur lors du parsing de l'historique.
+                  </span>
+                );
+              }
+            })()
+          ) : (
+            <span class="text-error">SVG introuvable ou aucun historique.</span>
+          )
+        }
+      </div>
+
+      <div
+        class="flex items-center gap-2 w-full bg-base-300 p-4 rounded-b-3xl shadow border-t border-base-300"
+      >
+        <input
+          id="user-prompt"
+          type="text"
+          placeholder="Décrivez vos modifications..."
+          class="input flex-grow"
+        />
+        <button id="edit-button" class="btn btn-primary">Modifier</button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  //@ts-nocheck
+
+  let promptList = [];
+  let currentSvgId = "";
+
+  const pathParts = window.location.pathname.split("/");
+  currentSvgId = pathParts[pathParts.length - 1];
+
+  function scrollToBottom() {
+    const chatHistory = document.getElementById("chat-history");
+    if (chatHistory) {
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+  }
+
+  function initializePromptList() {
+    const chatHistory = document.getElementById("chat-history");
+    if (chatHistory) {
+      const chatMessages = chatHistory.querySelectorAll(".chat");
+      promptList = Array.from(chatMessages).map((chat) => {
+        const isUser = chat.classList.contains("chat-end");
+        const content =
+          chat.querySelector(".chat-bubble pre")?.textContent || "";
+        return {
+          role: isUser ? "user" : "assistant",
+          content: content.trim(),
+        };
+      });
+    }
+    console.log("Historique initialisé:", promptList);
+
+    setTimeout(scrollToBottom, 100);
+  }
+
+  async function generateSVG(prompt) {
+    console.log("Génération SVG avec prompt:", prompt);
+
+    const res = await fetch("/api/generateSVG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(prompt),
+    });
+    return (await res.json()).svg;
+  }
+
+  async function saveSVGEdit(svgCode, chatHistory) {
+    console.log("Sauvegarde du SVG édité...");
+
+    const res = await fetch("/api/editSVG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: currentSvgId,
+        code_svg: svgCode,
+        chat_history: JSON.stringify(chatHistory),
+      }),
+    });
+    return await res.json();
+  }
+
+  function updateChatDisplay() {
+    const chatHistory = document.getElementById("chat-history");
+    if (!chatHistory) return;
+
+    chatHistory.innerHTML = "";
+
+    promptList.forEach((msg, idx) => {
+      const chatDiv = document.createElement("div");
+      chatDiv.className = `chat ${msg.role === "user" ? "chat-end" : "chat-start"}`;
+
+      const avatarStart = msg.role === "user" ? "" : `
+        <div class="avatar">
+          <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <img src="/favicon.svg" alt="Bot" />
+          </div>
+        </div>
+      `;
+      
+      const avatarEnd = msg.role === "user" ? `
+        <div class="avatar">
+          <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <img src="https://api.dicebear.com/7.x/personas/svg?seed=user" alt="User" />
+          </div>
+        </div>
+      ` : "";
+
+      chatDiv.innerHTML = `
+        <div class="flex items-end gap-2">
+          ${avatarStart}
+          <div class="${`chat-bubble break-words whitespace-pre-wrap max-w-full ${msg.role === "user" ? "bg-primary text-primary-content" : "bg-secondary text-secondary-content"}`}">
+            <pre class="break-words whitespace-pre-wrap max-w-full bg-transparent border-none p-0 m-0 font-sans text-base"></pre>
+          </div>
+          ${avatarEnd}
+        </div>
+        <div class="chat-footer opacity-60 text-xs mt-1 text-right ml-10">${msg.role}</div>
+      `;
+      
+      const preElement = chatDiv.querySelector('pre');
+      if (preElement) {
+        preElement.textContent = msg.content;
+      }
+
+      chatHistory.appendChild(chatDiv);
+    });
+
+    scrollToBottom();
+  }
+
+  async function handleEdit() {
+    const promptElement = document.getElementById("user-prompt");
+    const prompt = promptElement ? promptElement.value.trim() : "";
+
+    if (!prompt) {
+      alert("Veuillez entrer une description de modification.");
+      return;
+    }
+
+    console.log("Prompt d'édition soumis :", prompt);
+
+    promptList.push({ role: "user", content: prompt });
+
+    const svgContainer = document.getElementById("svg-container");
+    const editButton = document.getElementById("edit-button");
+
+    svgContainer.innerHTML = `<span class="loading loading-ring loading-xl"></span>`;
+    editButton.disabled = true;
+
+    try {
+      const aiResponse = await generateSVG(promptList);
+
+      const svgMatch = aiResponse.content.match(/<svg[\s\S]*?<\/svg>/i);
+      const svgCode = svgMatch ? svgMatch[0] : "";
+
+      console.log("Code SVG généré :", svgCode);
+
+      aiResponse.content = svgCode;
+      promptList.push(aiResponse);
+
+      svgContainer.innerHTML = svgCode;
+
+      updateChatDisplay();
+
+      await saveSVGEdit(svgCode, promptList);
+
+      promptElement.value = "";
+    } catch (error) {
+      console.error("Erreur lors de l'édition :", error);
+      alert("Erreur lors de l'édition du SVG.");
+    } finally {
+      editButton.disabled = false;
+    }
+
+    console.log("Historique des prompts :", promptList);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initializePromptList();
+
+    const editButton = document.getElementById("edit-button");
+    const input = document.getElementById("user-prompt");
+
+    if (editButton) {
+      editButton.addEventListener("click", handleEdit);
+    }
+
+    if (input) {
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          handleEdit();
+        }
+      });
+    }
+  });
+</script>

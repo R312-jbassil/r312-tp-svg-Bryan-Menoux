@@ -14,6 +14,7 @@
     "daisyui": "^5.1.12",
     "openai": "^5.20.3",
     "pocketbase": "^0.26.2",
+    "pocketbase-types": "^3.0.0",
     "tailwindcss": "^4.1.13"
   },
   "description": "- Nom:\r - Prenom:\r - Netlify:",

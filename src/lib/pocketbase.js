@@ -39,4 +39,26 @@ export async function deleteFavorite(id) {
   }
 }
 
+export async function getAllSvgs() {
+  try {
+    const records = await pb.collection("svg").getFullList({
+      sort: "-created",
+    });
+    return records;
+  } catch (err) {
+    console.error("Erreur lors de la récupération des SVG :", err);
+    return [];
+  }
+}
+
+export async function deleteSvg(id) {
+  try {
+    await pb.collection("svg").delete(id);
+    return true;
+  } catch (err) {
+    console.error("Erreur lors de la suppression du SVG :", err);
+    return false;
+  }
+}
+
 export default pb;

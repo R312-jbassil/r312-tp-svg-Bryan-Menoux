@@ -1,30 +1,32 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { getAllFavorites } from "../lib/pocketbase";
+import Layout from "../../layouts/Layout.astro";
+import { getAllSvgs } from "../../lib/pocketbase";
+import { ui } from "../../i18n/ui.js";
+const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 
-// charger les favoris au rendu de la page
-let favorites = await getAllFavorites();
+// charger les SVG au rendu de la page
+let svgs = await getAllSvgs();
 ---
 
 
 <Layout>
   <div class="flex flex-col gap-6 bg-base-200 min-h-screen p-6">
-    <h1 class="text-3xl font-bold text-violet-400">🌟 Mes Favoris</h1>
+    <h1 class="text-3xl font-bold text-violet-400">{ui[locale].gallery.title}</h1>
 
     {
-      favorites.length === 0 ? (
+      svgs.length === 0 ? (
         <div class="alert alert-info shadow-lg">
-          <span class="text-zinc-700">Aucun favori enregistré.</span>
+          <span class="text-zinc-700">{ui[locale].gallery.noSvg}</span>
         </div>
       ) : (
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {favorites.map((fav) => (
+          {svgs.map((svg) => (
             <div class="card bg-base-100 border-2 border-violet-500 shadow-xl h-full">
               <!-- Zone d’affichage SVG -->
               <div class="bg-zinc-900 flex items-center justify-center aspect-video overflow-hidden rounded-t-xl">
                 <div
                   class="max-w-full max-h-full"
-                  set:html={fav.contenu_svg}
+                  set:html={svg.code_svg}
                 ></div>
               </div>
 
@@ -32,18 +34,23 @@ let favorites = await getAllFavorites();
               <div class="card-body flex flex-col justify-between border-t border-violet-500">
                 <div>
                   <h2 class="card-title">
-                    <span class="badge badge-secondary">{fav.nom_favori}</span>
+                    <span class="badge badge-secondary">{svg.nom || ui[locale].gallery.noName}</span>
                   </h2>
                   <p class="text-xs text-zinc-500 mt-1">
-                    Ajouté le {new Date(fav.created).toLocaleString("fr-FR")}
+                    {ui[locale].gallery.created} {new Date(svg.created).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
                   </p>
                 </div>
                 <div class="card-actions justify-end">
                   <button
-                    class="btn btn-error btn-sm delete-button"
-                    data-id={fav.id}
+                    class="btn  btn-sm bg-primary"
                   >
-                    Supprimer
+                    <a href={`/gallery/${svg.id}`}>{ui[locale].gallery.viewMore}</a>
+                  </button>
+                  <button
+                    class="btn btn-error btn-sm delete-button"
+                    data-id={svg.id}
+                  >
+                    {ui[locale].gallery.deleteButton}
                   </button>
                 </div>
               </div>
@@ -53,12 +60,23 @@ let favorites = await getAllFavorites();
       )
     }
   </div>
+
+  <dialog id="confirm-modal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg">{ui[locale].gallery.confirmDelete}</h3>
+      <p class="py-4">{ui[locale].gallery.confirmDeleteMessage}</p>
+      <div class="modal-action">
+        <button id="cancel-delete" class="btn">{ui[locale].gallery.cancel}</button>
+        <button id="confirm-delete" class="btn btn-error">{ui[locale].gallery.delete}</button>
+      </div>
+    </div>
+  </dialog>
 </Layout>
 
 
 <script>
   //@ts-nocheck
-  import { deleteFavorite } from "../lib/pocketbase";
+  import { deleteSvg } from "../../lib/pocketbase";
 
   let currentId = null;
   const modal = document.getElementById("confirm-modal");
@@ -67,6 +85,7 @@ let favorites = await getAllFavorites();
 
   document.querySelectorAll(".delete-button").forEach((btn) => {
     btn.addEventListener("click", () => {
+        console.log("Bouton supprimer cliqué, ID:", btn.dataset.id);    
       currentId = btn.dataset.id;
       modal.showModal();
     });
@@ -75,10 +94,10 @@ let favorites = await getAllFavorites();
   confirmBtn.addEventListener("click", async () => {
     if (!currentId) return;
     try {
-      await deleteFavorite(currentId);
+      await deleteSvg(currentId);
       location.reload();
     } catch (err) {
-      console.error("Erreur suppression favori:", err);
+      console.error("Erreur suppression SVG:", err);
     }
   });
 

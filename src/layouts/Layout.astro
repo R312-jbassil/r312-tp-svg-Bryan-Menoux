@@ -1,27 +1,41 @@
 ---
 import "../styles/global.css";
+import { ui } from "../i18n/ui.js";
+
+// Récupérer la langue depuis le middleware
+const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dracula" class="h-full">
+<html lang={locale} data-theme="dracula" data-locale={locale} class="h-full">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>Astro Basics</title>
+    <title>{ui[locale].nav.appName}</title>
   </head>
   <body class="h-full">
     <div class="h-full flex flex-col min-h-0">
       <div class="navbar bg-base-300 border-b border-violet-500 px-6">
+        <form method="POST" action={Astro.url.pathname}>
+          <select name="language" class="select" onchange="this.form.submit()">
+            <option value="en" selected={locale === "en"}>English</option>
+            <option value="fr" selected={locale === "fr"}>Français</option>
+          </select>
+        </form>
         <div class="flex-1">
-          <a href="/" class="btn btn-ghost normal-case text-xl text-violet-400"
-            >SVG Maker</a
-          >
+          <a href="/" class="btn btn-ghost normal-case text-xl text-violet-400">
+            {ui[locale].nav.appName}
+          </a>
         </div>
         <div class="flex gap-2">
-          <a href="/generator" class="btn btn-sm btn-primary">Générateur</a>
-          <a href="/favoris" class="btn btn-sm btn-secondary">Favoris</a>
+          <a href="/generator" class="btn btn-sm btn-primary"
+            >{ui[locale].nav.generator}</a
+          >
+          <a href="/gallery" class="btn btn-sm btn-secondary"
+            >{ui[locale].nav.gallery}</a
+          >
         </div>
       </div>
 

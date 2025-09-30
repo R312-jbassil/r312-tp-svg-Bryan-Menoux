@@ -1,5 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { ui } from "../i18n/ui.js";
+const locale = (Astro.locals.lang as "en" | "fr") ?? "en";
+console.log("Locale in generator:", locale);
 ---
 
 <Layout>
@@ -9,7 +12,7 @@ import Layout from "../layouts/Layout.astro";
         id="svg-container"
         class="flex-1 bg-base-100 rounded-2xl border-2 border-violet-500 flex items-center justify-center"
       >
-        <span class="text-zinc-400">En attente...</span>
+        <span class="text-zinc-400">{ui[locale].generator.waiting}</span>
       </div>
 
       <div
@@ -32,11 +35,14 @@ import Layout from "../layouts/Layout.astro";
         <input
           id="user-prompt"
           type="text"
-          placeholder="Décrivez votre SVG..."
+          placeholder={ui[locale].generator.placeholder}
           class="input input-bordered flex-1"
         />
-        <button id="generate-button" class="btn btn-primary">Générer</button>
-        <button id="favorite-button" class="btn btn-secondary">
+        <button id="generate-button" class="btn btn-primary"
+          >{ui[locale].generator.generateButton}</button
+        >
+
+        <button id="save-button" class="btn btn-secondary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -49,7 +55,9 @@ import Layout from "../layouts/Layout.astro";
             ></path>
           </svg>
         </button>
-        <button class="btn btn-secondary m-2" id="edit-button">Edit</button>
+        <button class="btn btn-secondary m-2" id="edit-button"
+          >{ui[locale].generator.editButton}</button
+        >
       </div>
     </div>
   </div>
@@ -58,6 +66,27 @@ import Layout from "../layouts/Layout.astro";
 <script>
   //@ts-nocheck
   import { createNewFavorite } from "../lib/pocketbase";
+
+  // Récupérer la locale depuis le serveur
+  const locale = document.documentElement.getAttribute("data-locale") || "fr";
+
+  // Traductions côté client
+  const translations = {
+    fr: {
+      promptName: "Donnez un nom à votre création :",
+      nameEmptyError: "Le nom ne peut pas être vide.",
+      saveSuccess: "SVG sauvegardé avec succès !",
+      saveError: "Erreur lors de la sauvegarde : ",
+    },
+    en: {
+      promptName: "Give a name to your creation:",
+      nameEmptyError: "The name cannot be empty.",
+      saveSuccess: "SVG saved successfully!",
+      saveError: "Error while saving: ",
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
 
   async function generateSVG(prompt) {
     console.log(prompt);
@@ -146,79 +175,54 @@ import Layout from "../layouts/Layout.astro";
     if (e.key === "Enter") handleSubmit();
   });
 
-  const favoriteButton = document.getElementById("favorite-button");
   const actionZone = document.getElementById("normal-zone");
   const svgOutput = document.getElementById("svg-output");
 
   const successDiv = document.createElement("div");
-  successDiv.className =
-    "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-500 z-50";
-  successDiv.textContent = "Favori enregistré avec succès !";
   document.body.appendChild(successDiv);
 
-  function showSuccess() {
-    successDiv.classList.remove("opacity-0");
-    successDiv.classList.add("opacity-100");
-    setTimeout(() => {
-      successDiv.classList.remove("opacity-100");
-      successDiv.classList.add("opacity-0");
-    }, 5000);
+  // Fonction utilitaire pour sauvegarder le SVG
+  const saveButton = document.getElementById("save-button");
+
+  //création de la div success
+
+  async function saveSVG(params) {
+    // Envoi de la requête à notre endpoint
+    const res = await fetch("/api/saveSVG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return await res.json();
   }
 
-  favoriteButton?.addEventListener("click", () => {
-    const svgCode = svgOutput.textContent.trim();
-    if (!svgCode) return;
-
-    if (document.getElementById("fav-zone")) return;
-
-    actionZone.classList.add("hidden");
-
-    const favZone = document.createElement("div");
-    favZone.id = "fav-zone";
-    favZone.className = "flex gap-2 w-full animate-fadeIn";
-
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.placeholder = "Nom du favori...";
-    nameInput.className = "input input-bordered flex-1";
-
-    const validateBtn = document.createElement("button");
-    validateBtn.textContent = "Valider";
-    validateBtn.className = "btn btn-success";
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "Annuler";
-    cancelBtn.className = "btn btn-error";
-
-    favZone.appendChild(nameInput);
-    favZone.appendChild(validateBtn);
-    favZone.appendChild(cancelBtn);
-    actionZone.parentNode.insertBefore(favZone, actionZone.nextSibling);
-
-    nameInput.focus();
-
-    async function saveFavorite() {
-      const name = nameInput.value.trim();
-      if (!name) return;
-
-      try {
-        await createNewFavorite(name, svgCode);
-        favZone.remove();
-        actionZone.classList.remove("hidden");
-        showSuccess();
-      } catch (err) {
-        console.error("Erreur enregistrement favori:", err);
+  // Gestionnaire d'événements pour le bouton de sauvegarde
+  if (saveButton) {
+    saveButton.addEventListener("click", async () => {
+      console.log("Tentative de sauvegarde du SVG...");
+      // Demande du nom du SVG à l'utilisateur
+      const name = prompt(t.promptName);
+      if (name === null || name.trim() === "") {
+        alert(t.nameEmptyError);
+        return;
       }
-    }
+      const svgOutput = document.getElementById("svg-output")?.textContent;
+      console.log("Préparation de la sauvegarde :", JSON.stringify(svgOutput));
 
-    validateBtn.addEventListener("click", saveFavorite);
-    nameInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") saveFavorite();
-    });
+      // Préparation des données pour la sauvegarde
+      const params = {
+        nom: name,
+        code_svg: svgOutput || "<svg></svg>", // SVG par défaut si vide
+        chat_history: JSON.stringify(promptList), // Historique des échanges
+      };
 
-    cancelBtn.addEventListener("click", () => {
-      favZone.remove();
-      actionZone.classList.remove("hidden");
+      // Sauvegarde et gestion de la réponse
+      const result = await saveSVG(params);
+      if (result.success) {
+        alert(t.saveSuccess);
+      } else {
+        alert(t.saveError + result.error);
+      }
     });
-  });
+  }
 </script>
