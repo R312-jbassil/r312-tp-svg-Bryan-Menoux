@@ -1,0 +1,127 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+if (Astro.locals.user) {
+  return Astro.redirect("/");
+}
+---
+
+<Layout>
+  <div
+    class="min-h-screen flex items-center justify-center bg-base-200 px-6 py-12"
+  >
+    <div class="w-full max-w-sm">
+      <div
+        class="w-full rounded-2xl border border-base-300 bg-base-100 shadow-xl p-8"
+      >
+        <div class="text-center space-y-2 mb-8">
+          <h1 class="text-3xl font-bold text-base-content">Connexion</h1>
+          <p class="text-sm text-base-content/70">
+            Accédez à votre espace SVG Lab
+          </p>
+        </div>
+
+        <form id="login-form" class="flex flex-col gap-5 text-base-content/80">
+          <label
+            class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
+          >
+            <span class="label-text text-sm text-base-content">Email</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="nom@exemple.com"
+              required
+              class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
+            />
+          </label>
+
+          <label
+            class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
+          >
+            <span class="label-text text-sm text-base-content"
+              >Mot de passe</span
+            >
+            <input
+              type="password"
+              name="password"
+              placeholder="********"
+              required
+              class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block rounded-lg mt-2"
+          >
+            Se connecter
+          </button>
+
+          <p class="text-xs text-center text-base-content/70">
+            Besoin d'un compte ? Contactez l'administrateur.
+          </p>
+        </form>
+
+        <p
+          id="status"
+          class="mt-4 text-center text-sm min-h-[1.5rem] rounded-lg py-2 transition-all"
+        >
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    //@ts-nocheck
+    localStorage.removeItem("user");
+    const form = document.getElementById("login-form");
+    const status = document.getElementById("status");
+
+    function setStatus(message, type) {
+      status.className =
+        "mt-4 text-center text-sm min-h-[1.5rem] rounded-lg py-2 transition-all";
+
+      if (message && message.trim().length > 0) {
+        status.classList.add("bg-base-200/80");
+      }
+
+      if (type === "error") {
+        status.classList.add("text-error");
+      } else if (type === "success") {
+        status.classList.add("text-success");
+      } else {
+        status.classList.add("text-base-content/70");
+      }
+      status.textContent = message;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      setStatus("Connexion en cours...", "");
+
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.get("email"),
+            password: formData.get("password"),
+          }),
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          const resData = await res.json();
+          localStorage.setItem("user", JSON.stringify(resData.user));
+          setStatus("Connexion réussie !", "success");
+          setTimeout(() => (window.location.href = "/"), 800);
+        } else {
+          setStatus("Email ou mot de passe invalide.", "error");
+        }
+      } catch {
+        setStatus("Erreur de connexion. Vérifiez votre réseau.", "error");
+      }
+    });
+  </script>
+</Layout>

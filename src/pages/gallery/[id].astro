@@ -2,6 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import pb from "../../lib/pocketbase";
 import { type SvgRecord } from "../../utils/pocketbase-types";
+const user = Astro.locals.user;
 
 const id = Astro.params.id;
 
@@ -193,21 +194,27 @@ try {
       const chatDiv = document.createElement("div");
       chatDiv.className = `chat ${msg.role === "user" ? "chat-end" : "chat-start"}`;
 
-      const avatarStart = msg.role === "user" ? "" : `
+      const avatarStart =
+        msg.role === "user"
+          ? ""
+          : `
         <div class="avatar">
           <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
             <img src="/favicon.svg" alt="Bot" />
           </div>
         </div>
       `;
-      
-      const avatarEnd = msg.role === "user" ? `
+
+      const avatarEnd =
+        msg.role === "user"
+          ? `
         <div class="avatar">
           <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
             <img src="https://api.dicebear.com/7.x/personas/svg?seed=user" alt="User" />
           </div>
         </div>
-      ` : "";
+      `
+          : "";
 
       chatDiv.innerHTML = `
         <div class="flex items-end gap-2">
@@ -219,8 +226,8 @@ try {
         </div>
         <div class="chat-footer opacity-60 text-xs mt-1 text-right ml-10">${msg.role}</div>
       `;
-      
-      const preElement = chatDiv.querySelector('pre');
+
+      const preElement = chatDiv.querySelector("pre");
       if (preElement) {
         preElement.textContent = msg.content;
       }

@@ -180,6 +180,7 @@ console.log("Locale in generator:", locale);
 
   const successDiv = document.createElement("div");
   document.body.appendChild(successDiv);
+  const user = JSON.parse(localStorage.getItem("user") ?? "null");
 
   // Fonction utilitaire pour sauvegarder le SVG
   const saveButton = document.getElementById("save-button");
@@ -195,11 +196,14 @@ console.log("Locale in generator:", locale);
     });
     return await res.json();
   }
-
   // Gestionnaire d'événements pour le bouton de sauvegarde
   if (saveButton) {
     saveButton.addEventListener("click", async () => {
       console.log("Tentative de sauvegarde du SVG...");
+      if (!user || !user.id) {
+        alert("Vous devez être connecté pour sauvegarder un SVG.");
+        return;
+      }
       // Demande du nom du SVG à l'utilisateur
       const name = prompt(t.promptName);
       if (name === null || name.trim() === "") {
@@ -214,6 +218,7 @@ console.log("Locale in generator:", locale);
         nom: name,
         code_svg: svgOutput || "<svg></svg>", // SVG par défaut si vide
         chat_history: JSON.stringify(promptList), // Historique des échanges
+        user: user.id,
       };
 
       // Sauvegarde et gestion de la réponse

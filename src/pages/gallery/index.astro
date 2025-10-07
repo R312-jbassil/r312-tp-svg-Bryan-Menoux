@@ -1,55 +1,59 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getAllSvgs } from "../../lib/pocketbase";
+import pb from "../../lib/pocketbase";
+import { Collections } from "../../utils/pocketbase-types";
 import { ui } from "../../i18n/ui.js";
+
 const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
+const user = Astro.locals.user;
 
-// charger les SVG au rendu de la page
-let svgs = await getAllSvgs();
+// Fetch only the current user's SVGs when the page renders
+const svgList = user
+  ? await pb.collection(Collections.Svg).getFullList({
+      sort: "-created", // Latest SVGs first
+      filter: `user = "${user.id}"`, // Only SVGs tied to the logged-in user
+    })
+  : [];
 ---
-
 
 <Layout>
   <div class="flex flex-col gap-6 bg-base-200 min-h-screen p-6">
     <h1 class="text-3xl font-bold text-violet-400">{ui[locale].gallery.title}</h1>
 
     {
-      svgs.length === 0 ? (
+      svgList.length === 0 ? (
         <div class="alert alert-info shadow-lg">
           <span class="text-zinc-700">{ui[locale].gallery.noSvg}</span>
         </div>
       ) : (
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {svgs.map((svg) => (
+          {svgList.map((svg) => (
             <div class="card bg-base-100 border-2 border-violet-500 shadow-xl h-full">
-              <!-- Zone d’affichage SVG -->
+              <!-- SVG preview area -->
               <div class="bg-zinc-900 flex items-center justify-center aspect-video overflow-hidden rounded-t-xl">
-                <div
-                  class="max-w-full max-h-full"
-                  set:html={svg.code_svg}
-                ></div>
+                <div class="max-w-full max-h-full" set:html={svg.code_svg}></div>
               </div>
 
-              <!-- Contenu texte -->
+              <!-- Text content -->
               <div class="card-body flex flex-col justify-between border-t border-violet-500">
                 <div>
                   <h2 class="card-title">
-                    <span class="badge badge-secondary">{svg.nom || ui[locale].gallery.noName}</span>
+                    <span class="badge badge-secondary">
+                      {svg.nom || ui[locale].gallery.noName}
+                    </span>
                   </h2>
                   <p class="text-xs text-zinc-500 mt-1">
-                    {ui[locale].gallery.created} {new Date(svg.created).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+                    {ui[locale].gallery.created}{" "}
+                    {new Date(svg.created).toLocaleString(
+                      locale === "fr" ? "fr-FR" : "en-US"
+                    )}
                   </p>
                 </div>
                 <div class="card-actions justify-end">
-                  <button
-                    class="btn  btn-sm bg-primary"
-                  >
+                  <button class="btn btn-sm bg-primary">
                     <a href={`/gallery/${svg.id}`}>{ui[locale].gallery.viewMore}</a>
                   </button>
-                  <button
-                    class="btn btn-error btn-sm delete-button"
-                    data-id={svg.id}
-                  >
+                  <button class="btn btn-error btn-sm delete-button" data-id={svg.id}>
                     {ui[locale].gallery.deleteButton}
                   </button>
                 </div>
@@ -67,12 +71,13 @@ let svgs = await getAllSvgs();
       <p class="py-4">{ui[locale].gallery.confirmDeleteMessage}</p>
       <div class="modal-action">
         <button id="cancel-delete" class="btn">{ui[locale].gallery.cancel}</button>
-        <button id="confirm-delete" class="btn btn-error">{ui[locale].gallery.delete}</button>
+        <button id="confirm-delete" class="btn btn-error">
+          {ui[locale].gallery.delete}
+        </button>
       </div>
     </div>
   </dialog>
 </Layout>
-
 
 <script>
   //@ts-nocheck
@@ -85,7 +90,7 @@ let svgs = await getAllSvgs();
 
   document.querySelectorAll(".delete-button").forEach((btn) => {
     btn.addEventListener("click", () => {
-        console.log("Bouton supprimer cliqué, ID:", btn.dataset.id);    
+      console.log("Delete button clicked, ID:", btn.dataset.id);
       currentId = btn.dataset.id;
       modal.showModal();
     });
@@ -97,7 +102,7 @@ let svgs = await getAllSvgs();
       await deleteSvg(currentId);
       location.reload();
     } catch (err) {
-      console.error("Erreur suppression SVG:", err);
+      console.error("Error deleting SVG:", err);
     }
   });
 
@@ -106,3 +111,4 @@ let svgs = await getAllSvgs();
     modal.close();
   });
 </script>
+
