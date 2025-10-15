@@ -7,30 +7,26 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      # 1. Récupération du code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configuration de Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
-      # 3. Installation des dépendances
       - name: Install dependencies
         run: npm ci
-
-      # 4. Build du projet Astro et copie du package.json pour le serveur
+      
       - name: Build project
         run: |
           npm run build
           cp package.json dist/server/
+          cp package-lock.json dist/server/
 
-      # 5. Déploiement des fichiers buildés sur le VPS
       - name: Deploy to VPS via SCP
         uses: appleboy/scp-action@v0.1.3
         with:
@@ -45,7 +41,6 @@ jobs:
           overwrite: true
           debug: true
 
-      # 6. Installation des dépendances sur le VPS et démarrage du service
       - name: Install production dependencies on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -56,7 +51,7 @@ jobs:
           script: |
             cd /var/www/tp_svg/server
             echo "📦 Installation des dépendances sur le VPS..."
-            npm ci
+            npm install --omit=dev
             npm install astro kleur send server-destroy
 
             echo "🚀 Démarrage du serveur avec PM2..."
