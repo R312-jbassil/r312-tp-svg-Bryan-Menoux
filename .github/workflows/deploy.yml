@@ -31,7 +31,10 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
-          source: "dist/*"
+          source: |
+            dist/**
+            package.json
+            package-lock.json
           target: "/var/www/tp_svg/"
           strip_components: 1
           rm: false
