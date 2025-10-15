@@ -9,52 +9,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupère le code
+      # 1. Récupération du code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configure Node.js
+      # 2. Configuration de Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
-      # 3. Installe les dépendances
+      # 3. Installation des dépendances
       - name: Install dependencies
         run: npm ci
 
-      # 4. Build le projet Astro
+      # 4. Build du projet Astro et copie du package.json pour le serveur
       - name: Build project
-        run: npm run build
+        run: |
+          npm run build
+          cp package.json dist/server/
 
-      # 5. Déploie uniquement le contenu du dossier dist/server
-      - name: Deploy Astro build to VPS
+      # 5. Déploiement des fichiers buildés sur le VPS
+      - name: Deploy to VPS via SCP
         uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
-          source: "dist/server/**"
-          target: "/var/www/tp_svg/server"
-          rm: true
+          source: "dist/*"
+          target: "/var/www/tp_svg/"
+          strip_components: 1
+          rm: false
           overwrite: true
+          debug: true
 
-      # 6. Transfère les fichiers essentiels (package.json, lockfile, config Astro)
-      - name: Deploy config files to VPS
-        uses: appleboy/scp-action@v0.1.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22007
-          source: "{package.json,package-lock.json,astro.config.mjs}"
-          target: "/var/www/tp_svg"
-          overwrite: true
-
-      # 7. Installe les dépendances de prod et redémarre PM2 proprement
-      - name: Install dependencies & restart app
+      # 6. Installation des dépendances sur le VPS et démarrage du service
+      - name: Install production dependencies on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
@@ -62,17 +54,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
           script: |
-            echo "🔧 Passage dans /var/www/tp_svg"
-            cd /var/www/tp_svg
+            cd /var/www/tp_svg/server
+            echo "📦 Installation des dépendances sur le VPS..."
+            npm ci
+            npm install astro kleur send server-destroy
 
-            echo "📦 Installation des dépendances de production"
-            npm ci --omit=dev
-            npm install kleur send server-destroy
-
-            echo "🧹 Nettoyage d'un ancien process PM2 s'il existe"
-            pm2 delete tp_svg || true
-
-            echo "🚀 Lancement du serveur sur le port 8088"
-            PORT=8088 pm2 start server/entry.mjs --name tp_svg
+            echo "🚀 Démarrage du serveur avec PM2..."
+            PORT=8088 pm2 restart tp_svg || PORT=8088 pm2 start entry.mjs --name tp_svg
 
             echo "✅ Déploiement terminé avec succès !"
