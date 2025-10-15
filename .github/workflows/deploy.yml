@@ -36,21 +36,18 @@ jobs:
           rm: true
           overwrite: true
 
-      - name: Deploy project config files (package.json, lockfile, etc.)
+      - name: Deploy config files to VPS
         uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
-          source: |
-            package.json
-            package-lock.json
-            astro.config.mjs
-          target: "/var/www/tp_svg/"
+          source: "{package.json,package-lock.json,astro.config.mjs}"
+          target: "/var/www/tp_svg"
           overwrite: true
 
-      - name: Install production dependencies and restart app
+      - name: Install dependencies & restart app
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
