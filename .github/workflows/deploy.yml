@@ -21,9 +21,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build project
+      - name: Build project (Node adapter)
         run: npm run build
 
+      # --- Vérification du contenu avant déploiement ---
+      - name: Check dist folder
+        run: |
+          echo "== Workspace contents =="
+          ls -la
+          echo "== Dist folder contents =="
+          ls -la dist || echo "⚠️ dist folder not found"
+
+      # --- Transfert vers le VPS ---
       - name: Deploy to VPS via SCP
         uses: appleboy/scp-action@v0.1.3
         with:
@@ -31,15 +40,13 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
-          source: |
-            dist/**
-            package.json
-            package-lock.json
+          source: "./dist/**,./package.json,./package-lock.json"
           target: "/var/www/tp_svg/"
-          strip_components: 1
           rm: false
           overwrite: true
           debug: true
+
+      # --- Installation et redémarrage du serveur ---
       - name: Install production dependencies on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -48,7 +55,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
           script: |
-            cd /var/www/tp_svg/server
-            npm ci
-            npm install send server-destroy
+            echo "== Deploying tp_svg on VPS =="
+            cd /var/www/tp_svg
+            # Installation propre des dépendances du projet
+            npm ci --omit=dev
+            # Démarrage / redémarrage du serveur Astro avec PM2
+            cd server
             PORT=8088 pm2 restart tp_svg || PORT=8088 pm2 start entry.mjs --name tp_svg
+            pm2 save
+            echo "✅ Deployment finished successfully!"
