@@ -56,4 +56,3 @@ export const POST = async ({ request, cookies }) => {
     });
   }
 };
-// moved from /pages/api to /pages/apis

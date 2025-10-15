@@ -22,4 +22,3 @@ export async function POST({ request }) {
     );
   }
 }
-// moved from /pages/api to /pages/apis
