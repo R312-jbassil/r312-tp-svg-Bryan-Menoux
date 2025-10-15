@@ -7,7 +7,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,15 +15,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build project
         run: |
           npm run build
+          # Copie les fichiers nécessaires pour la prod dans le dossier de build
           cp package.json dist/server/
           cp package-lock.json dist/server/
 
@@ -34,7 +35,8 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22007
-          source: "dist/*"
+          source: |
+            dist/**
           target: "/var/www/tp_svg/"
           strip_components: 1
           rm: false
@@ -51,10 +53,12 @@ jobs:
           script: |
             cd /var/www/tp_svg/server
             echo "📦 Installation des dépendances sur le VPS..."
-            npm install --omit=dev
-            npm install astro kleur send server-destroy
-
+            # Essaye npm ci si le lockfile est présent, sinon fallback sur npm install
+            if [ -f package-lock.json ]; then
+              npm ci || npm install
+            else
+              npm install
+            fi
             echo "🚀 Démarrage du serveur avec PM2..."
             PORT=8088 pm2 restart tp_svg || PORT=8088 pm2 start entry.mjs --name tp_svg
-
             echo "✅ Déploiement terminé avec succès !"
