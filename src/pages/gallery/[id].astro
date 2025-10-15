@@ -161,7 +161,7 @@ try {
   async function generateSVG(prompt) {
     console.log("Génération SVG avec prompt:", prompt);
 
-    const res = await fetch("/api/generateSVG", {
+    const res = await fetch("/apis/generateSVG", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(prompt),
@@ -172,7 +172,7 @@ try {
   async function saveSVGEdit(svgCode, chatHistory) {
     console.log("Sauvegarde du SVG édité...");
 
-    const res = await fetch("/api/editSVG", {
+    const res = await fetch("/apis/editSVG", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

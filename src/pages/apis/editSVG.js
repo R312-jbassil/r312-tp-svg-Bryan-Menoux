@@ -1,3 +1,4 @@
+// moved from /pages/api to /pages/apis
 import pb from "../../lib/pocketbase";
 import { Collections } from "../../utils/pocketbase-types";
 

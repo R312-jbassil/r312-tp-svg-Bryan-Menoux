@@ -1,4 +1,4 @@
-// src/pages/api/login.ts
+// src/pages/apis/login.ts
 import pb from "../../lib/pocketbase";
 import { Collections } from "../../utils/pocketbase-types";
 

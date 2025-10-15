@@ -10,9 +10,9 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // Pour les routes API, on exige l'authentification sauf pour /api/login
-  if (context.url.pathname.startsWith("/api/")) {
-    const publicApiRoutes = ["/api/login", "/api/signup"];
+  // Pour les routes API, on exige l'authentification sauf pour /apis/login
+  if (context.url.pathname.startsWith("/apis/")) {
+    const publicApiRoutes = ["/apis/login", "/apis/signup"];
     if (
       !context.locals.user &&
       !publicApiRoutes.includes(context.url.pathname)
@@ -34,7 +34,7 @@ export const onRequest = async (context, next) => {
   // Cette fonction middleware s'exécute à chaque requête.
   // context = infos de la requête (URL, cookies, méthode...)
   // next() = continue le traitement normal (afficher la page demandée)
-  if (context.url.pathname.startsWith("/api/")) {
+  if (context.url.pathname.startsWith("/apis/")) {
     return next();
   }
   // Si la requête est un POST (soumission du formulaire de langue) :
