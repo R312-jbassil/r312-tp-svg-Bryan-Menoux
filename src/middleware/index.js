@@ -12,7 +12,11 @@ export const onRequest = async (context, next) => {
 
   // Pour les routes API, on exige l'authentification sauf pour /api/login
   if (context.url.pathname.startsWith("/api/")) {
-    if (!context.locals.user && context.url.pathname !== "/api/login") {
+    const publicApiRoutes = ["/api/login", "/api/signup"];
+    if (
+      !context.locals.user &&
+      !publicApiRoutes.includes(context.url.pathname)
+    ) {
       // Si l'utilisateur n'est pas connecté, on retourne une erreur 401 (non autorisé)
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -23,7 +27,8 @@ export const onRequest = async (context, next) => {
 
   // Pour les autres pages, si l'utilisateur n'est pas connecté, on le redirige vers /login
   if (!context.locals.user) {
-    if (context.url.pathname !== "/login" && context.url.pathname !== "/")
+    const publicPages = ["/login", "/signup", "/"];
+    if (!publicPages.includes(context.url.pathname))
       return Response.redirect(new URL("/login", context.url), 303);
   }
   // Cette fonction middleware s'exécute à chaque requête.

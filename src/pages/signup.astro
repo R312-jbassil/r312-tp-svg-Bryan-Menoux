@@ -15,13 +15,27 @@ if (Astro.locals.user) {
         class="w-full rounded-2xl border border-base-300 bg-base-100 shadow-xl p-8"
       >
         <div class="text-center space-y-2 mb-8">
-          <h1 class="text-3xl font-bold text-base-content">Connexion</h1>
+          <h1 class="text-3xl font-bold text-base-content">Inscription</h1>
           <p class="text-sm text-base-content/70">
-            Accédez à votre espace SVG Lab
+            Créez votre compte pour rejoindre SVG Lab.
           </p>
         </div>
 
-        <form id="login-form" class="flex flex-col gap-5 text-base-content/80">
+        <form id="signup-form" class="flex flex-col gap-5 text-base-content/80">
+          <label
+            class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
+          >
+            <span class="label-text text-sm text-base-content"
+              >Nom d'utilisateur</span
+            >
+            <input
+              type="text"
+              name="username"
+              placeholder="Votre pseudo"
+              class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
+            />
+          </label>
+
           <label
             class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
           >
@@ -46,6 +60,23 @@ if (Astro.locals.user) {
               name="password"
               placeholder="********"
               required
+              minlength="8"
+              class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
+            />
+          </label>
+
+          <label
+            class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
+          >
+            <span class="label-text text-sm text-base-content">
+              Confirmer le mot de passe
+            </span>
+            <input
+              type="password"
+              name="passwordConfirm"
+              placeholder="********"
+              required
+              minlength="8"
               class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
             />
           </label>
@@ -54,12 +85,12 @@ if (Astro.locals.user) {
             type="submit"
             class="btn btn-primary btn-block rounded-lg mt-2"
           >
-            Se connecter
+            Créer un compte
           </button>
 
           <p class="text-xs text-center text-base-content/70">
-            Pas de compte ?
-            <a class="link link-primary" href="/signup">Créez-en un</a>.
+            Déjà inscrit ?
+            <a class="link link-primary" href="/login">Se connecter</a>
           </p>
         </form>
 
@@ -75,7 +106,7 @@ if (Astro.locals.user) {
   <script>
     //@ts-nocheck
     localStorage.removeItem("user");
-    const form = document.getElementById("login-form");
+    const form = document.getElementById("signup-form");
     const status = document.getElementById("status");
 
     function setStatus(message, type) {
@@ -99,28 +130,40 @@ if (Astro.locals.user) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(form);
-      setStatus("Connexion en cours...", "");
+      const password = formData.get("password");
+      const passwordConfirm = formData.get("passwordConfirm");
+
+      if (password !== passwordConfirm) {
+        setStatus("Les mots de passe ne correspondent pas.", "error");
+        return;
+      }
+
+      setStatus("Création du compte en cours...", "");
 
       try {
-        const res = await fetch("/api/login", {
+        const res = await fetch("/api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: formData.get("email"),
-            password: formData.get("password"),
+            password,
+            passwordConfirm,
+            username: formData.get("username"),
           }),
           credentials: "include",
         });
 
+        const resData = await res.json();
+
         if (res.ok) {
-          const resData = await res.json();
           localStorage.setItem("user", JSON.stringify(resData.user));
-          setStatus("Connexion réussie !", "success");
+          setStatus("Compte créé avec succès !", "success");
           setTimeout(() => (window.location.href = "/"), 800);
         } else {
-          setStatus("Email ou mot de passe invalide.", "error");
+          setStatus(resData.error || "Impossible de créer le compte.", "error");
         }
-      } catch {
+      } catch (err) {
+        console.error("Signup error:", err);
         setStatus("Erreur de connexion. Vérifiez votre réseau.", "error");
       }
     });
