@@ -1,43 +1,4 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
 import pb from "../lib/pocketbase.js";
-
-const middlewareDir = path.dirname(fileURLToPath(import.meta.url));
-const distApiDir = path.resolve(middlewareDir, "pages/api");
-const srcApiDir = path.resolve(process.cwd(), "src/pages/api");
-
-const getApiBaseDir = () =>
-  import.meta?.env?.PROD ? distApiDir : srcApiDir;
-
-const findApiModulePath = (routePath) => {
-  if (!routePath) return null;
-
-  const baseDir = getApiBaseDir();
-  if (!fs.existsSync(baseDir)) {
-    return null;
-  }
-
-  const candidates = [
-    path.join(baseDir, `${routePath}.astro.mjs`),
-    path.join(baseDir, `${routePath}.mjs`),
-    path.join(baseDir, `${routePath}.js`),
-    path.join(baseDir, `${routePath}.cjs`),
-    path.join(baseDir, `${routePath}.ts`),
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  const entry = fs
-    .readdirSync(baseDir)
-    .find((fileName) => fileName.toLowerCase().startsWith(`${routePath.toLowerCase()}.`));
-
-  return entry ? path.join(baseDir, entry) : null;
-};
 
 const isSecureRequest = (request, url) => {
   const forwardedProto = request.headers.get("x-forwarded-proto");
@@ -50,6 +11,12 @@ const isSecureRequest = (request, url) => {
   );
 };
 
+const normalizePath = (pathname) => {
+  if (!pathname) return "/";
+  const trimmed = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+  return trimmed || "/";
+};
+
 export const onRequest = async (context, next) => {
   // Load auth data from cookie if present
   const cookie = context.cookies.get("pb_auth")?.value;
@@ -60,41 +27,12 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  if (context.url.pathname.startsWith("/api/")) {
+  const pathname = normalizePath(context.url.pathname);
+  const lowerPath = pathname.toLowerCase();
+
+  if (lowerPath.startsWith("/api/")) {
     const publicApiRoutes = ["/api/login", "/api/signup"];
-
-    const cleanPath = context.url.pathname.replace(/\/$/, "");
-    const routePath = cleanPath.replace("/api/", "");
-
-    const apiFilePath = findApiModulePath(routePath);
-
-    if (apiFilePath) {
-      try {
-        const moduleUrl = pathToFileURL(apiFilePath);
-        const module = await import(moduleUrl.href);
-        const method = context.request.method.toUpperCase();
-
-        if (method === "POST" && typeof module.POST === "function") {
-          return module.POST(context);
-        }
-        if (method === "GET" && typeof module.GET === "function") {
-          return module.GET(context);
-        }
-
-        return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-          status: 405,
-          headers: { "Content-Type": "application/json" },
-        });
-      } catch (err) {
-        console.error(`Error in /api/${routePath}:`, err);
-        return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    const isPublicApi = publicApiRoutes.includes(cleanPath);
+    const isPublicApi = publicApiRoutes.includes(lowerPath);
 
     if (!context.locals.user && !isPublicApi) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -108,10 +46,8 @@ export const onRequest = async (context, next) => {
 
   if (!context.locals.user) {
     const publicPages = ["/", "/login", "/signup"];
-    const cleanPath = context.url.pathname.replace(/\/$/, "");
-
-    if (!publicPages.includes(cleanPath)) {
-      console.log("Access denied, redirecting to /login:", cleanPath);
+    if (!publicPages.includes(lowerPath)) {
+      console.log("Access denied, redirecting to /login:", pathname);
       return Response.redirect(new URL("/login", context.url), 303);
     }
   }
