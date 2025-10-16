@@ -12,14 +12,27 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Gestion des routes API dans /server/api ---
+  // --- Gestion des routes API dans /pages/api ---
   if (context.url.pathname.startsWith("/api/")) {
     const publicApiRoutes = ["/api/login", "/api/signup"];
     const routePath = context.url.pathname.replace("/api/", "");
-    const apiFilePath = path.resolve("api", `${routePath}.js`);
 
-    // Vérifie si le fichier existe physiquement
-    if (fs.existsSync(apiFilePath)) {
+    // 🔧 Corrigé : détection du bon dossier selon l'environnement
+    const baseDir =
+      process.cwd().includes("dist") || import.meta.env.PROD
+        ? path.resolve("dist/server/pages/api")
+        : path.resolve("src/pages/api");
+
+    // ✅ Gestion du support TypeScript + JavaScript
+    const apiFilePathJs = path.join(baseDir, `${routePath}.js`);
+    const apiFilePathTs = path.join(baseDir, `${routePath}.ts`);
+    const apiFilePath = fs.existsSync(apiFilePathJs)
+      ? apiFilePathJs
+      : fs.existsSync(apiFilePathTs)
+      ? apiFilePathTs
+      : null;
+
+    if (apiFilePath) {
       try {
         const module = await import(`file://${apiFilePath}`);
         const method = context.request.method.toUpperCase();
@@ -36,15 +49,17 @@ export const onRequest = async (context, next) => {
           headers: { "Content-Type": "application/json" },
         });
       } catch (err) {
-        console.error("❌ Erreur lors du chargement de l’API :", err);
+        console.error(`❌ Erreur lors du chargement de ${routePath}.`, err);
         return new Response(
           JSON.stringify({ error: "Internal Server Error" }),
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
+    } else {
+      console.warn(`⚠️ Aucun fichier API trouvé pour ${routePath}`);
     }
 
-    // Si aucun fichier d’API trouvé et utilisateur non connecté
+    // --- Si aucun fichier d’API trouvé et utilisateur non connecté ---
     if (
       !context.locals.user &&
       !publicApiRoutes.includes(context.url.pathname)
@@ -67,7 +82,7 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Vérifie si la connexion est HTTPS (utile pour les cookies sécurisés) ---
+  // --- Vérifie si la connexion est HTTPS ---
   const host = context.request.headers.get("host") || "";
   const isSecure =
     context.url.protocol === "https:" ||
