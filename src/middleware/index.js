@@ -12,18 +12,16 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Gestion des routes API dans /pages/api ---
+  // --- Gestion des routes API ---
   if (context.url.pathname.startsWith("/api/")) {
     const publicApiRoutes = ["/api/login", "/api/signup"];
     const routePath = context.url.pathname.replace("/api/", "");
 
-    // 🔧 Corrigé : détection du bon dossier selon l'environnement
-    const baseDir =
-      process.cwd().includes("dist") || import.meta.env.PROD
-        ? path.resolve("dist/server/pages/api")
-        : path.resolve("src/pages/api");
+    // 📁 Détection du bon répertoire
+    const baseDir = import.meta.env?.PROD
+      ? path.resolve("server/pages/api")
+      : path.resolve("src/pages/api");
 
-    // ✅ Gestion du support TypeScript + JavaScript
     const apiFilePathJs = path.join(baseDir, `${routePath}.js`);
     const apiFilePathTs = path.join(baseDir, `${routePath}.ts`);
     const apiFilePath = fs.existsSync(apiFilePathJs)
@@ -49,40 +47,47 @@ export const onRequest = async (context, next) => {
           headers: { "Content-Type": "application/json" },
         });
       } catch (err) {
-        console.error(`❌ Erreur lors du chargement de ${routePath}.`, err);
+        console.error(`❌ Erreur dans /api/${routePath}:`, err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ error: "Erreur interne du serveur" }),
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
-    } else {
-      console.warn(`⚠️ Aucun fichier API trouvé pour ${routePath}`);
     }
 
-    // --- Si aucun fichier d’API trouvé et utilisateur non connecté ---
-    if (
-      !context.locals.user &&
-      !publicApiRoutes.includes(context.url.pathname)
-    ) {
+    // --- Vérification d’auth sur API privées ---
+    const isPublicApi = publicApiRoutes.some((r) =>
+      context.url.pathname.startsWith(r)
+    );
+
+    if (!context.locals.user && !isPublicApi) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Continue la requête normalement si rien d’intercepté
     return next();
   }
 
   // --- Redirection des pages protégées ---
   if (!context.locals.user) {
-    const publicPages = ["/login", "/signup", "/"];
-    if (!publicPages.includes(context.url.pathname)) {
+    const publicPages = ["/", "/login", "/signup"];
+
+    // On normalise le chemin sans slash final
+    const cleanPath = context.url.pathname.replace(/\/$/, "");
+
+    const isPublicPage = publicPages.some(
+      (p) => cleanPath === p || cleanPath.startsWith(p)
+    );
+
+    if (!isPublicPage) {
+      console.log("🔒 Accès refusé, redirection vers /login :", cleanPath);
       return Response.redirect(new URL("/login", context.url), 303);
     }
   }
 
-  // --- Vérifie si la connexion est HTTPS ---
+  // --- Sécurité HTTPS pour cookies/langue ---
   const host = context.request.headers.get("host") || "";
   const isSecure =
     context.url.protocol === "https:" ||
