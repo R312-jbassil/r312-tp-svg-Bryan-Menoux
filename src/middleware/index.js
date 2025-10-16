@@ -1,60 +1,64 @@
 import pb from "../lib/pocketbase.js";
 
 export const onRequest = async (context, next) => {
+  // --- Auth depuis le cookie ---
   const cookie = context.cookies.get("pb_auth")?.value;
   if (cookie) {
-    pb.authStore.loadFromCookie(cookie); // Charge les infos d'auth depuis le cookie
+    pb.authStore.loadFromCookie(cookie);
     if (pb.authStore.isValid) {
-      // Si le token est valide, ajoute les données utilisateur dans Astro.locals
       context.locals.user = pb.authStore.record;
     }
   }
 
-  // Pour les routes API, on exige l'authentification sauf pour /apis/login
+  // --- Routes API ---
   if (context.url.pathname.startsWith("/apis/")) {
     const publicApiRoutes = ["/apis/login", "/apis/signup"];
     if (
       !context.locals.user &&
       !publicApiRoutes.includes(context.url.pathname)
     ) {
-      // Si l'utilisateur n'est pas connecté, on retourne une erreur 401 (non autorisé)
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
+        headers: { "Content-Type": "application/json" },
       });
     }
-    return next(); // Continue le traitement normal
-  }
-
-  // Pour les autres pages, si l'utilisateur n'est pas connecté, on le redirige vers /login
-  if (!context.locals.user) {
-    const publicPages = ["/login", "/signup", "/"];
-    if (!publicPages.includes(context.url.pathname))
-      return Response.redirect(new URL("/login", context.url), 303);
-  }
-  // Cette fonction middleware s'exécute à chaque requête.
-  // context = infos de la requête (URL, cookies, méthode...)
-  // next() = continue le traitement normal (afficher la page demandée)
-  if (context.url.pathname.startsWith("/apis/")) {
     return next();
   }
-  // Si la requête est un POST (soumission du formulaire de langue) :
-  if (context.request.method === "POST") {
-    // Lire les données du formulaire
-    const form = await context.request.formData().catch(() => null);
-    const lang = form?.get("language"); // Récupérer la langue choisie
 
-    // Vérifier que la langue est bien 'en' ou 'fr'
+  // --- Redirection pages protégées ---
+  if (!context.locals.user) {
+    const publicPages = ["/login", "/signup", "/"];
+    if (!publicPages.includes(context.url.pathname)) {
+      return Response.redirect(new URL("/login", context.url), 303);
+    }
+  }
+
+  // --- Détection HTTPS (vérifie aussi si domaine public) ---
+  const host = context.request.headers.get("host") || "";
+  const isSecure =
+    context.url.protocol === "https:" ||
+    context.request.headers.get("x-forwarded-proto") === "https" ||
+    host.includes("bryan-menoux.fr"); // ✅ ton domaine prod toujours en HTTPS
+
+  // --- Gestion du changement de langue ---
+  if (context.request.method === "POST") {
+    // ⚠️ On ne bloque que les POST externes non sécurisés
+    const referer = context.request.headers.get("referer") || "";
+    if (!isSecure && referer.includes("https://")) {
+      return new Response("HTTPS required", { status: 403 });
+    }
+
+    const form = await context.request.formData().catch(() => null);
+    const lang = form?.get("language");
+
     if (lang === "en" || lang === "fr") {
-      // Enregistrer la préférence dans un cookie nommé 'locale'
-      // - path: '/' → cookie disponible sur tout le site
-      // - maxAge: 1 an
       context.cookies.set("locale", String(lang), {
         path: "/",
         maxAge: 60 * 60 * 24 * 365,
+        secure: isSecure,
+        sameSite: "lax",
       });
 
-      // Rediriger avec un code 303 (See Other) vers la même page en GET
-      // Cela évite que le formulaire soit renvoyé si l'utilisateur recharge la page
       return Response.redirect(
         new URL(context.url.pathname + context.url.search, context.url),
         303
@@ -62,18 +66,12 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // Déterminer la langue pour cette requête
-  const cookieLocale = context.cookies.get("locale")?.value; // Lire la langue depuis le cookie
-
-  // Choisir la langue finale :
-  // - Si cookie valide → utiliser la valeur du cookie
-  // - Sinon → essayer d'utiliser la langue préférée du navigateur
-  // - Si rien n'est défini → utiliser 'en' par défaut
+  // --- Langue par défaut ---
+  const cookieLocale = context.cookies.get("locale")?.value;
   context.locals.lang =
     cookieLocale === "fr" || cookieLocale === "en"
       ? cookieLocale
       : context.preferredLocale ?? "en";
 
-  // Continuer le traitement normal (afficher la page demandée)
   return next();
 };
