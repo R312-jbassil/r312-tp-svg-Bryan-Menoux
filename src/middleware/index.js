@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import pb from "../lib/pocketbase.js";
 
 const middlewareDir = path.dirname(fileURLToPath(import.meta.url));
-const distApiDir = path.resolve(middlewareDir, "../pages/api");
+const distApiDir = path.resolve(middlewareDir, "pages/api");
 const srcApiDir = path.resolve(process.cwd(), "src/pages/api");
 
 const getApiBaseDir = () =>
@@ -163,4 +163,3 @@ export const onRequest = async (context, next) => {
 
   return next();
 };
-
