@@ -7,6 +7,24 @@ interface LoginBody {
   password: string;
 }
 
+const buildAuthCookieOptions = (request: Request) => {
+  const url = new URL(request.url);
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("host") || "";
+  const isSecure =
+    url.protocol === "https:" ||
+    forwardedProto === "https" ||
+    host.includes("bryan-menoux.fr");
+
+  return {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: isSecure,
+    expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+  };
+};
+
 export const POST = async ({ request, cookies }: APIContext): Promise<Response> => {
   try {
     const { email, password }: LoginBody = await request.json();
@@ -22,19 +40,14 @@ export const POST = async ({ request, cookies }: APIContext): Promise<Response> 
       .collection(Collections.Users)
       .authWithPassword(email, password);
 
-    cookies.set("pb_auth", pb.authStore.exportToCookie(), {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    });
+    cookies.set("pb_auth", pb.authStore.exportToCookie(), buildAuthCookieOptions(request));
 
     return new Response(JSON.stringify({ user: authData.record }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("❌ Erreur de connexion :", err);
+    console.error("Erreur de connexion :", err);
     return new Response(
       JSON.stringify({
         error:
@@ -46,3 +59,4 @@ export const POST = async ({ request, cookies }: APIContext): Promise<Response> 
     );
   }
 };
+

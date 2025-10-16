@@ -1,9 +1,57 @@
-import pb from "../lib/pocketbase.js";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath, pathToFileURL } from "url";
+import pb from "../lib/pocketbase.js";
+
+const middlewareDir = path.dirname(fileURLToPath(import.meta.url));
+const distApiDir = path.resolve(middlewareDir, "../pages/api");
+const srcApiDir = path.resolve(process.cwd(), "src/pages/api");
+
+const getApiBaseDir = () =>
+  import.meta?.env?.PROD ? distApiDir : srcApiDir;
+
+const findApiModulePath = (routePath) => {
+  if (!routePath) return null;
+
+  const baseDir = getApiBaseDir();
+  if (!fs.existsSync(baseDir)) {
+    return null;
+  }
+
+  const candidates = [
+    path.join(baseDir, `${routePath}.astro.mjs`),
+    path.join(baseDir, `${routePath}.mjs`),
+    path.join(baseDir, `${routePath}.js`),
+    path.join(baseDir, `${routePath}.cjs`),
+    path.join(baseDir, `${routePath}.ts`),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  const entry = fs
+    .readdirSync(baseDir)
+    .find((fileName) => fileName.toLowerCase().startsWith(`${routePath.toLowerCase()}.`));
+
+  return entry ? path.join(baseDir, entry) : null;
+};
+
+const isSecureRequest = (request, url) => {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("host") || "";
+
+  return (
+    url.protocol === "https:" ||
+    forwardedProto === "https" ||
+    host.includes("bryan-menoux.fr")
+  );
+};
 
 export const onRequest = async (context, next) => {
-  // --- Auth depuis le cookie ---
+  // Load auth data from cookie if present
   const cookie = context.cookies.get("pb_auth")?.value;
   if (cookie) {
     pb.authStore.loadFromCookie(cookie);
@@ -12,27 +60,18 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Gestion des routes API ---
   if (context.url.pathname.startsWith("/api/")) {
     const publicApiRoutes = ["/api/login", "/api/signup"];
-    const routePath = context.url.pathname.replace("/api/", "");
 
-    // 📁 Détection du bon répertoire
-    const baseDir = import.meta.env?.PROD
-      ? path.resolve("server/pages/api")
-      : path.resolve("src/pages/api");
+    const cleanPath = context.url.pathname.replace(/\/$/, "");
+    const routePath = cleanPath.replace("/api/", "");
 
-    const apiFilePathJs = path.join(baseDir, `${routePath}.js`);
-    const apiFilePathTs = path.join(baseDir, `${routePath}.ts`);
-    const apiFilePath = fs.existsSync(apiFilePathJs)
-      ? apiFilePathJs
-      : fs.existsSync(apiFilePathTs)
-      ? apiFilePathTs
-      : null;
+    const apiFilePath = findApiModulePath(routePath);
 
     if (apiFilePath) {
       try {
-        const module = await import(`file://${apiFilePath}`);
+        const moduleUrl = pathToFileURL(apiFilePath);
+        const module = await import(moduleUrl.href);
         const method = context.request.method.toUpperCase();
 
         if (method === "POST" && typeof module.POST === "function") {
@@ -47,18 +86,15 @@ export const onRequest = async (context, next) => {
           headers: { "Content-Type": "application/json" },
         });
       } catch (err) {
-        console.error(`❌ Erreur dans /api/${routePath}:`, err);
+        console.error(`Error in /api/${routePath}:`, err);
         return new Response(
-          JSON.stringify({ error: "Erreur interne du serveur" }),
+          JSON.stringify({ error: "Internal Server Error" }),
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
     }
 
-    // --- Vérification d’auth sur API privées ---
-    const isPublicApi = publicApiRoutes.some((r) =>
-      context.url.pathname.startsWith(r)
-    );
+    const isPublicApi = publicApiRoutes.includes(cleanPath);
 
     if (!context.locals.user && !isPublicApi) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -70,35 +106,35 @@ export const onRequest = async (context, next) => {
     return next();
   }
 
-  // --- Redirection des pages protégées ---
   if (!context.locals.user) {
     const publicPages = ["/", "/login", "/signup"];
-
-    // On normalise le chemin sans slash final
     const cleanPath = context.url.pathname.replace(/\/$/, "");
 
-    const isPublicPage = publicPages.some(
-      (p) => cleanPath === p || cleanPath.startsWith(p)
-    );
-
-    if (!isPublicPage) {
-      console.log("🔒 Accès refusé, redirection vers /login :", cleanPath);
+    if (!publicPages.includes(cleanPath)) {
+      console.log("Access denied, redirecting to /login:", cleanPath);
       return Response.redirect(new URL("/login", context.url), 303);
     }
   }
 
-  // --- Sécurité HTTPS pour cookies/langue ---
-  const host = context.request.headers.get("host") || "";
-  const isSecure =
-    context.url.protocol === "https:" ||
-    context.request.headers.get("x-forwarded-proto") === "https" ||
-    host.includes("bryan-menoux.fr");
+  const isSecure = isSecureRequest(context.request, context.url);
 
-  // --- Gestion du changement de langue ---
   if (context.request.method === "POST") {
     const referer = context.request.headers.get("referer") || "";
-    if (!isSecure && referer.includes("https://")) {
-      return new Response("HTTPS required", { status: 403 });
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer);
+        const sameOrigin =
+          refererUrl.hostname === context.url.hostname &&
+          refererUrl.port === context.url.port;
+
+        if (!isSecure && !sameOrigin) {
+          return new Response("Cross-site POST forbidden", { status: 403 });
+        }
+      } catch {
+        if (!isSecure) {
+          return new Response("Cross-site POST forbidden", { status: 403 });
+        }
+      }
     }
 
     const form = await context.request.formData().catch(() => null);
@@ -119,7 +155,6 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Langue par défaut ---
   const cookieLocale = context.cookies.get("locale")?.value;
   context.locals.lang =
     cookieLocale === "fr" || cookieLocale === "en"
@@ -128,3 +163,4 @@ export const onRequest = async (context, next) => {
 
   return next();
 };
+
