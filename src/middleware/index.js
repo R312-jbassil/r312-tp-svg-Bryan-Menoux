@@ -12,31 +12,39 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Proxy pour routes API physiques dans /src/api ---
+  // --- Gestion des routes API dans /server/apis ---
   if (context.url.pathname.startsWith("/apis/")) {
     const publicApiRoutes = ["/apis/login", "/apis/signup"];
     const routePath = context.url.pathname.replace("/apis/", "");
-    const apiFilePath = path.resolve("src/apis", `${routePath}.js`);
+    const apiFilePath = path.resolve("server/apis", `${routePath}.js`);
 
-    // Si un fichier d'API existe physiquement (ex: src/api/login.js)
+    // Vérifie si le fichier existe physiquement
     if (fs.existsSync(apiFilePath)) {
-      const module = await import(`file://${apiFilePath}`);
-      const method = context.request.method.toUpperCase();
+      try {
+        const module = await import(`file://${apiFilePath}`);
+        const method = context.request.method.toUpperCase();
 
-      if (method === "POST" && typeof module.POST === "function") {
-        return module.POST(context);
-      }
-      if (method === "GET" && typeof module.GET === "function") {
-        return module.GET(context);
-      }
+        if (method === "POST" && typeof module.POST === "function") {
+          return module.POST(context);
+        }
+        if (method === "GET" && typeof module.GET === "function") {
+          return module.GET(context);
+        }
 
-      return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-        status: 405,
-        headers: { "Content-Type": "application/json" },
-      });
+        return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+          status: 405,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (err) {
+        console.error("❌ Erreur lors du chargement de l’API :", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Si pas trouvé, vérifier auth sinon 401
+    // Si aucun fichier d’API trouvé et utilisateur non connecté
     if (
       !context.locals.user &&
       !publicApiRoutes.includes(context.url.pathname)
@@ -47,11 +55,11 @@ export const onRequest = async (context, next) => {
       });
     }
 
-    // Continue la chaîne normale si rien d’intercepté
+    // Continue la requête normalement si rien d’intercepté
     return next();
   }
 
-  // --- Redirection pages protégées ---
+  // --- Redirection des pages protégées ---
   if (!context.locals.user) {
     const publicPages = ["/login", "/signup", "/"];
     if (!publicPages.includes(context.url.pathname)) {
@@ -59,7 +67,7 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Détection HTTPS ---
+  // --- Vérifie si la connexion est HTTPS (utile pour les cookies sécurisés) ---
   const host = context.request.headers.get("host") || "";
   const isSecure =
     context.url.protocol === "https:" ||
