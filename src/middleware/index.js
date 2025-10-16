@@ -12,11 +12,11 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Gestion des routes API dans /server/apis ---
-  if (context.url.pathname.startsWith("/apis/")) {
-    const publicApiRoutes = ["/apis/login", "/apis/signup"];
-    const routePath = context.url.pathname.replace("/apis/", "");
-    const apiFilePath = path.resolve("server/apis", `${routePath}.js`);
+  // --- Gestion des routes API dans /server/api ---
+  if (context.url.pathname.startsWith("/api/")) {
+    const publicApiRoutes = ["/api/login", "/api/signup"];
+    const routePath = context.url.pathname.replace("/api/", "");
+    const apiFilePath = path.resolve("server/api", `${routePath}.js`);
 
     // Vérifie si le fichier existe physiquement
     if (fs.existsSync(apiFilePath)) {
