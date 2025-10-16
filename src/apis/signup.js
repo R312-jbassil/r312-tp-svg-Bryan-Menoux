@@ -1,5 +1,5 @@
-import pb from "../../lib/pocketbase";
-import { Collections } from "../../utils/pocketbase-types";
+import pb from "../lib/pocketbase";
+import { Collections } from "../utils/pocketbase-types";
 
 export const POST = async ({ request, cookies }) => {
   const { email, password, passwordConfirm, username } = await request.json();

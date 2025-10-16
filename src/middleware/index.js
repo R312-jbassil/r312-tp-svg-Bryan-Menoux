@@ -1,4 +1,6 @@
 import pb from "../lib/pocketbase.js";
+import fs from "fs";
+import path from "path";
 
 export const onRequest = async (context, next) => {
   // --- Auth depuis le cookie ---
@@ -10,9 +12,31 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Routes API ---
+  // --- Proxy pour routes API physiques dans /src/api ---
   if (context.url.pathname.startsWith("/apis/")) {
     const publicApiRoutes = ["/apis/login", "/apis/signup"];
+    const routePath = context.url.pathname.replace("/apis/", "");
+    const apiFilePath = path.resolve("src/apis", `${routePath}.js`);
+
+    // Si un fichier d'API existe physiquement (ex: src/api/login.js)
+    if (fs.existsSync(apiFilePath)) {
+      const module = await import(`file://${apiFilePath}`);
+      const method = context.request.method.toUpperCase();
+
+      if (method === "POST" && typeof module.POST === "function") {
+        return module.POST(context);
+      }
+      if (method === "GET" && typeof module.GET === "function") {
+        return module.GET(context);
+      }
+
+      return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+        status: 405,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Si pas trouvé, vérifier auth sinon 401
     if (
       !context.locals.user &&
       !publicApiRoutes.includes(context.url.pathname)
@@ -22,6 +46,8 @@ export const onRequest = async (context, next) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Continue la chaîne normale si rien d’intercepté
     return next();
   }
 
@@ -33,16 +59,15 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // --- Détection HTTPS (vérifie aussi si domaine public) ---
+  // --- Détection HTTPS ---
   const host = context.request.headers.get("host") || "";
   const isSecure =
     context.url.protocol === "https:" ||
     context.request.headers.get("x-forwarded-proto") === "https" ||
-    host.includes("bryan-menoux.fr"); // ✅ ton domaine prod toujours en HTTPS
+    host.includes("bryan-menoux.fr");
 
   // --- Gestion du changement de langue ---
   if (context.request.method === "POST") {
-    // ⚠️ On ne bloque que les POST externes non sécurisés
     const referer = context.request.headers.get("referer") || "";
     if (!isSecure && referer.includes("https://")) {
       return new Response("HTTPS required", { status: 403 });
