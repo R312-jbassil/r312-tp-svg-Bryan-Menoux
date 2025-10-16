@@ -16,7 +16,7 @@ export const onRequest = async (context, next) => {
   if (context.url.pathname.startsWith("/api/")) {
     const publicApiRoutes = ["/api/login", "/api/signup"];
     const routePath = context.url.pathname.replace("/api/", "");
-    const apiFilePath = path.resolve("server/api", `${routePath}.js`);
+    const apiFilePath = path.resolve("api", `${routePath}.js`);
 
     // Vérifie si le fichier existe physiquement
     if (fs.existsSync(apiFilePath)) {
