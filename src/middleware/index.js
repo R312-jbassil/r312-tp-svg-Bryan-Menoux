@@ -12,8 +12,8 @@ export const onRequest = async (context, next) => {
   }
 
   // --- ROUTES API : AUTH OBLIGATOIRE SAUF LOGIN / SIGNUP ---
-  if (context.url.pathname.startsWith("/api/")) {
-    const publicApiRoutes = ["/api/login", "/api/signup"];
+  if (context.url.pathname.startsWith("/_api/")) {
+    const publicApiRoutes = ["/_api/login", "/_api/signup"];
 
     // Tolère les variantes avec ou sans slash final
     const isPublicApi = publicApiRoutes.some(

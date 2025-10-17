@@ -141,7 +141,7 @@ if (Astro.locals.user) {
       setStatus("Création du compte en cours...", "");
 
       try {
-        const res = await fetch("/api/signup", {
+        const res = await fetch("/_api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
