@@ -13,7 +13,7 @@ export const onRequest = async (context, next) => {
 
   // --- ROUTES API : AUTH OBLIGATOIRE SAUF LOGIN / SIGNUP ---
   if (context.url.pathname.startsWith("/api/")) {
-    const publicApiRoutes = ["/api/login", "/api/signup"];
+    const publicApiRoutes = ["/api/login/", "/api/signup/"];
     if (
       !context.locals.user &&
       !publicApiRoutes.includes(context.url.pathname)
@@ -28,9 +28,9 @@ export const onRequest = async (context, next) => {
 
   // --- REDIRECTION SI NON CONNECTÉ ---
   if (!context.locals.user) {
-    const publicPages = ["/login", "/signup", "/"];
+    const publicPages = ["/login/", "/signup/", "/"];
     if (!publicPages.includes(context.url.pathname))
-      return Response.redirect(new URL("/login", context.url), 303);
+      return Response.redirect(new URL("/login/", context.url), 303);
   }
 
   // --- LOG DÉBOGAGE ---
