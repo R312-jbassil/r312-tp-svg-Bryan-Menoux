@@ -91,7 +91,7 @@ console.log("Locale in generator:", locale);
   async function generateSVG(prompt) {
     console.log(prompt);
 
-    const res = await fetch("/_api/generateSVG", {
+    const res = await fetch("/api/generateSVG", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(prompt),
@@ -189,7 +189,7 @@ console.log("Locale in generator:", locale);
 
   async function saveSVG(params) {
     // Envoi de la requête à notre endpoint
-    const res = await fetch("/_api/saveSVG", {
+    const res = await fetch("/api/saveSVG", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),

@@ -8,7 +8,7 @@ import { Collections } from "../../utils/pocketbase-types";
  */
 export const GET = async () => {
   return new Response(
-    JSON.stringify({ message: "Endpoint /_api/login is alive" }),
+    JSON.stringify({ message: "Endpoint /api/login is alive" }),
     {
       status: 200,
       headers: { "Content-Type": "application/json" },
