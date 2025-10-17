@@ -10,3 +10,9 @@ export const POST = async ({ cookies }) => {
     headers: { Location: "/" },
   });
 };
+
+// Optionnel : GET visible pour tester
+export const GET = async () =>
+  new Response(JSON.stringify({ message: "Logout endpoint ready" }), {
+    status: 200,
+  });
