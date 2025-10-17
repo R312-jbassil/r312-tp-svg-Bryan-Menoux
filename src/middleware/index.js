@@ -1,6 +1,7 @@
 import pb from "../lib/pocketbase.js";
 
 export const onRequest = async (context, next) => {
+  // --- AUTHENTIFICATION POCKETBASE ---
   const cookie = context.cookies.get("pb_auth")?.value;
   if (cookie) {
     pb.authStore.loadFromCookie(cookie); // Charge les infos d'auth depuis le cookie
@@ -10,7 +11,7 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // Pour les routes API, on exige l'authentification sauf pour /api/login
+  // --- ROUTES API : AUTH OBLIGATOIRE SAUF LOGIN / SIGNUP ---
   if (context.url.pathname.startsWith("/api/")) {
     const publicApiRoutes = ["/api/login", "/api/signup"];
     if (
@@ -25,18 +26,17 @@ export const onRequest = async (context, next) => {
     return next(); // Continue le traitement normal
   }
 
-  // Pour les autres pages, si l'utilisateur n'est pas connecté, on le redirige vers /login
+  // --- REDIRECTION SI NON CONNECTÉ ---
   if (!context.locals.user) {
     const publicPages = ["/login", "/signup", "/"];
     if (!publicPages.includes(context.url.pathname))
       return Response.redirect(new URL("/login", context.url), 303);
   }
-  // Cette fonction middleware s'exécute à chaque requête.
-  // context = infos de la requête (URL, cookies, méthode...)
-  // next() = continue le traitement normal (afficher la page demandée)
-  if (context.url.pathname.startsWith("/api/")) {
-    return next();
-  }
+
+  // --- LOG DÉBOGAGE ---
+  console.log("Middleware onRequest:", context.url);
+
+  // --- GESTION DE LA LANGUE ---
   // Si la requête est un POST (soumission du formulaire de langue) :
   if (context.request.method === "POST") {
     // Lire les données du formulaire
@@ -74,6 +74,6 @@ export const onRequest = async (context, next) => {
       ? cookieLocale
       : context.preferredLocale ?? "en";
 
-  // Continuer le traitement normal (afficher la page demandée)
+  // --- CONTINUER LE TRAITEMENT NORMAL ---
   return next();
 };
