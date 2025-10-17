@@ -2,7 +2,7 @@ import PocketBase from "pocketbase";
 
 var path = "";
 if (import.meta.env.MODE === "development") path = "http://localhost:8090";
-else path = "https://tp-svg.bryan-menoux.fr/pb";
+else path = "http://localhost:8087";
 const pb = new PocketBase(path);
 
 export async function createNewFavorite(name, svg) {
