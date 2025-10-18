@@ -1,4 +1,4 @@
-// src/pages/api/generate-svg.js
+// src/pages/apis/generate-svg.js
 import { OpenAI } from "openai";
 
 // Récupération du token d'accès à partir des variables d'environnement
@@ -6,61 +6,68 @@ const ACCESS_TOKEN = import.meta.env.HF_TOKEN;
 const BASE_URL = import.meta.env.HF_URL;
 
 export const POST = async ({ request }) => {
-  // Affiche la requête dans la console pour le débogage
-  console.log(request);
-
-  // Extraction des message du corps de la requête
-  const messages = await request.json();
-  // Initialisation du client OpenAI avec l'URL de base et le token d'API
-  const client = new OpenAI({
-    baseURL: BASE_URL, // URL de l'API
-    apiKey: ACCESS_TOKEN, // Token d'accès pour l'API
-  });
-
-  // Création du message système pour guider le modèle
-  let SystemMessage = {
-    role: "system", // Rôle du message
-    content:
-      "You are an SVG code generator. Generate SVG code for the following messages. Make sure to include ids for each part of the generated SVG.", // Contenu du message
-  };
+  // --- Étape 1 : Journalisation pour débogage ---
+  console.log("[generate-svg] Requête reçue");
 
   try {
-    // Appel à l'API pour générer le code SVG en utilisant le modèle spécifié
+    // --- Étape 2 : Extraction du contenu JSON de la requête ---
+    const messages = await request.json();
+    console.log("[generate-svg] Messages reçus :", messages);
+
+    // --- Étape 3 : Initialisation du client OpenAI avec l'URL de base et le token d'API ---
+    const client = new OpenAI({
+      baseURL: BASE_URL, // URL de l'API (ex : HuggingFace endpoint)
+      apiKey: ACCESS_TOKEN, // Token d'accès pour l'API
+    });
+
+    // --- Étape 4 : Création du message système pour guider le modèle ---
+    const SystemMessage = {
+      role: "system", // Rôle du message
+      content:
+        "You are an SVG code generator. Generate SVG code for the following messages. Make sure to include ids for each part of the generated SVG.",
+    };
+
+    // --- Étape 5 : Appel à l'API pour générer le code SVG ---
     const chatCompletion = await client.chat.completions.create({
       model: "meta-llama/Llama-3.1-8B-Instruct:novita", // Modèle à utiliser pour la génération
       messages: [SystemMessage, ...messages], // Messages envoyés au modèle, incluant le message système et l'historique des messages
     });
 
-    // Vérification que la réponse contient des choix
+    // --- Étape 6 : Vérification que la réponse contient bien des choix ---
     if (!chatCompletion.choices || chatCompletion.choices.length === 0) {
       throw new Error("Aucune réponse reçue de l'API");
     }
 
-    // Récupération du message généré par l'API
+    // --- Étape 7 : Récupération du message généré par l'API ---
     const message = chatCompletion.choices[0].message;
 
-    // Vérification que le message existe
+    // --- Étape 8 : Vérification que le message existe et contient du contenu ---
     if (!message || !message.content) {
       throw new Error("Message vide reçu de l'API");
     }
 
-    // Affiche le message généré dans la console pour le débogage
-    console.log("Generated SVG:", message);
+    // --- Étape 9 : Affichage du message complet dans la console pour vérification ---
+    console.log("[generate-svg] Réponse brute de l'API :", message);
 
-    // Recherche d'un élément SVG dans le message généré
+    // --- Étape 10 : Recherche d'un bloc <svg> dans le message généré ---
     const svgMatch = message.content.match(/<svg[\s\S]*?<\/svg>/i);
 
-    // Si un SVG est trouvé, le remplace dans le message, sinon laisse une chaîne vide
+    // --- Étape 11 : Si un SVG est trouvé, l'extrait, sinon vide ---
     message.content = svgMatch ? svgMatch[0] : "";
 
-    // Retourne une réponse JSON contenant le SVG généré
+    // --- Étape 12 : Journalisation du résultat final ---
+    console.log("[generate-svg] SVG extrait :", message.content);
+
+    // --- Étape 13 : Retourne une réponse JSON contenant le SVG généré ---
     return new Response(JSON.stringify({ svg: message }), {
-      headers: { "Content-Type": "application/json" }, // Définit le type de contenu de la réponse
+      status: 200,
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Erreur lors de la génération SVG:", error);
+    // --- Étape 14 : Gestion des erreurs ---
+    console.error("[generate-svg] Erreur lors de la génération SVG :", error);
 
-    // Retourne une réponse d'erreur
+    // --- Étape 15 : Réponse d'erreur détaillée avec un SVG de secours ---
     return new Response(
       JSON.stringify({
         error: "Erreur lors de la génération du SVG",
@@ -77,4 +84,15 @@ export const POST = async ({ request }) => {
       }
     );
   }
+};
+
+// --- Optionnel : route GET pour test de fonctionnement rapide ---
+export const GET = async () => {
+  return new Response(
+    JSON.stringify({ message: "Endpoint /apis/generate-svg is alive" }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 };
