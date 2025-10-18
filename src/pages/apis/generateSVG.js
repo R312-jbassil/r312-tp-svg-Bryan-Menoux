@@ -2,8 +2,8 @@
 import { OpenAI } from "openai";
 
 // Récupération du token d'accès à partir des variables d'environnement
-const ACCESS_TOKEN = import.meta.env.HF_TOKEN;
-const BASE_URL = import.meta.env.HF_URL;
+const ACCESS_TOKEN = process.env.HF_TOKEN;
+const BASE_URL = process.env.HF_URL;
 
 export const POST = async ({ request }) => {
   // --- Étape 1 : Journalisation pour débogage ---
