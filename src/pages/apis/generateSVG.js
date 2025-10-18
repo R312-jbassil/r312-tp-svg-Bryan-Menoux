@@ -1,9 +1,13 @@
 // src/pages/apis/generate-svg.js
 import { OpenAI } from "openai";
 
+// Détection automatique : dev (import.meta.env) ou prod (process.env)
+const isProd =
+  typeof process !== "undefined" && process.env.NODE_ENV === "production";
+
 // Récupération du token d'accès à partir des variables d'environnement
-const ACCESS_TOKEN = process.env.HF_TOKEN;
-const BASE_URL = process.env.HF_URL;
+const ACCESS_TOKEN = isProd ? process.env.HF_TOKEN : import.meta.env.HF_TOKEN;
+const BASE_URL = isProd ? process.env.HF_URL : import.meta.env.HF_URL;
 
 export const POST = async ({ request }) => {
   // --- Étape 1 : Journalisation pour débogage ---
