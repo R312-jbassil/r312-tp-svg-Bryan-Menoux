@@ -1,9 +1,19 @@
 import PocketBase from "pocketbase";
 
-var path = "";
-if (import.meta.env.MODE === "development") path = "http://localhost:8090";
-else path = "http://localhost:8087";
-const pb = new PocketBase(path);
+// Détection de l'environnement
+const isLocal =
+  typeof window !== "undefined"
+    ? window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    : import.meta.env.MODE === "development";
+
+const baseUrl = isLocal
+  ? "http://127.0.0.1:8090"
+  : typeof window !== "undefined"
+  ? `${window.location.protocol}//${window.location.hostname}:8087`
+  : "http://localhost:8087";
+
+const pb = new PocketBase(baseUrl);
 
 export async function createNewFavorite(name, svg) {
   try {
