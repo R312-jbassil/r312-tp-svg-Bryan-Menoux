@@ -2,15 +2,13 @@
 
 **IMPORTANT — VPS bloqué lors d'un déploiement (connexion Google)**
 
-J’ai déployé mon site sur le VPS qui nous a été prêté. La base du TP fonctionnait correctement, mais lors d’un déploiement le VPS s’est complètement bloqué.
+J'ai publié la base du TP en ligne cependant lors d’un déploiement de la fonctionnalité de connexion via Google, le VPS prêté par mr Mabed s’est complètement bloqué. En local la connexion Google fonctionnait, cpendant en production elle échouait, j'ai donc essayé de corriger ça quand le serveur a cessé de répondre.
 
-Ce deploy concernait la partie connexion via google. Mon problème venait du fait que la connexion fonctionnait en locale mais pas sur la version en ligne. C'est pour cela que j'essayais de le corriger mais malheureusement c'est à ce moment là que le vps s'est mis à ne plus répondre.
+Comme le serveur ne m’appartient pas, je n’ai pas d’accès administrateur pour le relancer. Tant que Mr Mabeb n’aura pas rétabli l’accès ou répondu à mon mail, je ne peux pas restaurer l’hébergement ni corriger la version en ligne.
 
-Comme ce serveur ne m’appartient pas, je n’ai aucun accès aux commandes d’administration pour le relancer. Tant que M. Mabeb ne m’aura pas répondu ou rétabli l’accès, je ne peux pas reprendre l’hébergement du site.
+Le site est actuellement indisponible, l’URL figure ci-dessous. J’ai fourni une démonstration vidéo dans le rendu Moodle. En guise de preuve, vous pouvez accéder à mes GitHub Actions montrant des déploiements réussis, mais je n’ai pas de captures d’écran formelles. Si le VPS est relancé avant correction, j'essayerai de corriger ce problème toutefois la connexion via Google restera probablement non fonctionnelle et plusieurs fonctionnalités seront encore manquantes. La seule version fonctionnelle est donc la version locale, la version en ligne ne servant que d'exemple montrant que j'avais réussi à la publier avant que le vps ne me bloque. 
 
-La seule preuve que je peux fournir aujourd’hui sont les multiples exécutions GitHub Actions réussies liées aux déploiements.
-
-- Nom: Menoux
-- Prenom: Bryan
-- Netlify:
-- URL du Site : tp-svg.bryan-menoux.fr
+- Nom : Menoux
+- Prénom : Bryan
+- Netlify :
+- URL du site : https://tp-svg.bryan-menoux.fr
