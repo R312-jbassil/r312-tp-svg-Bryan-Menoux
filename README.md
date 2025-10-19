@@ -1,8 +1,3 @@
-- Nom: Menoux
-- Prenom: Bryan
-- Netlify:
-- URL du Site : tp-svg.bryan-menoux.fr
-
 ![IMPORTANT - Déploiement échoué](https://img.shields.io/badge/IMPORTANT-D%C3%A9ploiement-red)
 
 **IMPORTANT — VPS bloqué lors d'un déploiement (connexion Google)**
@@ -14,3 +9,8 @@ Ce deploy concernait la partie connexion via google. Mon problème venait du fai
 Comme ce serveur ne m’appartient pas, je n’ai aucun accès aux commandes d’administration pour le relancer. Tant que M. Mabeb ne m’aura pas répondu ou rétabli l’accès, je ne peux pas reprendre l’hébergement du site.
 
 La seule preuve que je peux fournir aujourd’hui sont les multiples exécutions GitHub Actions réussies liées aux déploiements.
+
+- Nom: Menoux
+- Prenom: Bryan
+- Netlify:
+- URL du Site : tp-svg.bryan-menoux.fr
