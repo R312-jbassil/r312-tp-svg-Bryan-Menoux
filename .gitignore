@@ -26,3 +26,7 @@ pnpm-debug.log*
 out/
 
 pocketbase/
+
+backend/pb_data/data.db
+backend/pb_data/
+

@@ -1,20 +1,166 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { ui } from "../i18n/ui.js";
-const user = Astro.locals.user;
+const user = Astro.locals.user ?? null;
 const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
+const isAuthenticated = Boolean(user);
+const accountHeading = isAuthenticated
+  ? ui[locale].index.profileHeading
+  : ui[locale].index.loginHeading;
+const accountPrompt = isAuthenticated
+  ? ui[locale].index.profilePrompt
+  : ui[locale].index.loginPrompt;
+const accountButton = isAuthenticated
+  ? ui[locale].index.profileButton
+  : ui[locale].index.loginButton;
+const accountLink = isAuthenticated ? "/profil" : "/login";
+const featureItems = [
+  ui[locale].index.featureAccessibility,
+  ui[locale].index.featureSpeed,
+  ui[locale].index.featureThemes,
+];
 ---
 
 <Layout>
-  <div
-    class="flex flex-col h-full items-center justify-center glass bg-primary"
-  >
-    <h1 class="text-4xl font-bold mb-4 text-primary-content">
-      {ui[locale].index.title}
-    </h1>
-    <p class="mb-6 text-lg text-primary-content">
-      {ui[locale].index.description}
-    </p>
-    <a href="generator" class="btn btn-secondary">{ui[locale].index.button}</a>
+  <div class="relative h-full overflow-hidden bg-base-100 text-base-content">
+    <div class="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-br from-primary/10 via-secondary/5 to-base-100"></div>
+    <div class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_hsl(var(--p))_0%,_transparent_70%)] opacity-30 blur-xl"></div>
+      <div class="absolute -bottom-40 right-16 h-96 w-96 rounded-full bg-[radial-gradient(circle,_hsl(var(--s))_0%,_transparent_70%)] opacity-20 blur-2xl"></div>
+      <div class="absolute inset-0 bg-[linear-gradient(135deg,_rgba(255,255,255,0.04)_0%,_rgba(255,255,255,0)_45%,_rgba(255,255,255,0.04)_100%)] mix-blend-soft-light"></div>
+    </div>
+    <section
+      class="mx-auto flex h-full w-full max-w-6xl flex-col justify-center gap-12 px-6 py-20"
+      aria-labelledby="homepage-title"
+    >
+      <header class="flex flex-col gap-6 text-center lg:text-left">
+        <span class="badge badge-lg badge-primary self-center font-semibold uppercase tracking-wide lg:self-start">
+          {ui[locale].index.heroBadge}
+        </span>
+        <h1
+          id="homepage-title"
+          class="text-4xl font-bold tracking-tight text-primary sm:text-5xl"
+        >
+          {ui[locale].index.title}
+        </h1>
+        <p class="text-lg text-base-content">
+          {ui[locale].index.description}
+        </p>
+        <p class="text-base text-base-content/80">
+          {ui[locale].index.heroCta}
+        </p>
+        <ul class="flex flex-wrap justify-center gap-3 lg:justify-start">
+          {featureItems.map((feature) => (
+            <li class="badge badge-outline border-primary/30 bg-primary/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+              {feature}
+            </li>
+          ))}
+        </ul>
+      </header>
+
+      <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <article class="card bg-base-200/90 shadow-lg ring-1 ring-primary/10 transition duration-200 hover:-translate-y-1 hover:shadow-2xl">
+          <div class="card-body gap-6">
+            <div class="flex items-center gap-4">
+              <span class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  class="h-6 w-6"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="4" width="18" height="12" rx="2" />
+                  <path d="M9 20h6" />
+                  <path d="M12 16v4" />
+                  <path
+                    fill="currentColor"
+                    stroke="none"
+                    d="M12 7.5l1.3 2.6 2.9.4-2.1 1.9.5 2.8-2.6-1.4-2.6 1.4.5-2.8-2.1-1.9 2.9-.4z"
+                  />
+                </svg>
+              </span>
+              <h2 class="card-title text-primary">
+                {ui[locale].index.generatorHeading}
+              </h2>
+            </div>
+            <p class="text-sm leading-relaxed text-base-content/80">
+              {ui[locale].index.generatorDescription}
+            </p>
+            <a href="/generator" class="btn btn-primary btn-block">
+              {ui[locale].index.generatorButton}
+            </a>
+          </div>
+        </article>
+
+        <article class="card bg-base-200/90 shadow-lg ring-1 ring-secondary/10 transition duration-200 hover:-translate-y-1 hover:shadow-2xl">
+          <div class="card-body gap-6">
+            <div class="flex items-center gap-4">
+              <span class="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/20 text-secondary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  class="h-6 w-6"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="9" r="3.5" />
+                  <path d="M6 19c0-3.3 12-3.3 12 0" />
+                </svg>
+              </span>
+              <h2 class="card-title text-secondary">
+                {accountHeading}
+              </h2>
+            </div>
+            <p class="text-sm leading-relaxed text-base-content/80">
+              {accountPrompt}
+            </p>
+            <a href={accountLink} class="btn btn-secondary btn-block">
+              {accountButton}
+            </a>
+          </div>
+        </article>
+
+        <article class="card bg-base-200/90 shadow-lg ring-1 ring-accent/10 transition duration-200 hover:-translate-y-1 hover:shadow-2xl md:col-span-2 xl:col-span-1">
+          <div class="card-body gap-6">
+            <div class="flex items-center gap-4">
+              <span class="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 text-accent">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  class="h-6 w-6"
+                  aria-hidden="true"
+                >
+                  <rect x="4" y="5" width="16" height="14" rx="2" />
+                  <path d="M4 15l4-4 3 3 4-5 5 6" />
+                </svg>
+              </span>
+              <h2 class="card-title text-accent">
+                {ui[locale].index.galleryHeading}
+              </h2>
+            </div>
+            <p class="text-sm leading-relaxed text-base-content/80">
+              {ui[locale].index.galleryDescription}
+            </p>
+            <a href="/public-gallery" class="btn btn-accent btn-block">
+              {ui[locale].index.galleryButton}
+            </a>
+          </div>
+        </article>
+      </div>
+    </section>
   </div>
 </Layout>

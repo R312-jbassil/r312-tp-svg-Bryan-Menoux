@@ -20,7 +20,34 @@ export const GET = async () => {
  * Authentifie un utilisateur via PocketBase
  */
 export const POST = async ({ request, cookies }) => {
-  const { email, password } = await request.json();
+  const payload = await request.json();
+
+  if (payload.token && payload.record) {
+    try {
+      pb.authStore.save(payload.token, payload.record);
+      cookies.set("pb_auth", pb.authStore.exportToCookie(), {
+        path: "/",
+        httpOnly: true,
+        sameSite: "strict",
+        expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      });
+      const user = pb.authStore.model;
+      pb.authStore.clear();
+      return new Response(JSON.stringify({ user }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("OAuth finalize error:", err);
+      pb.authStore.clear();
+      return new Response(JSON.stringify({ error: "OAuth finalize failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  const { email, password } = payload;
 
   try {
     // Authentifie l'utilisateur dans PocketBase

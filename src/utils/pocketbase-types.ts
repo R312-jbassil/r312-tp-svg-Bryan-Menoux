@@ -16,4 +16,5 @@ export type SvgRecord = {
 export type UsersRecord = {
   username: string
   email: string
+  avatar?: string
 }
