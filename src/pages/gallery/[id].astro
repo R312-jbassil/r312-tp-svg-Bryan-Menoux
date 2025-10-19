@@ -50,8 +50,23 @@ try {
             }
           </p>
         </div>
-        <div class="w-[180px]"></div>
-        <!-- Spacer pour équilibrer -->
+        <button id="downloadBtn" class="btn btn-ghost btn-sm gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            ></path>
+          </svg>
+          Télécharger
+        </button>
       </div>
     </div>
 
@@ -304,8 +319,66 @@ try {
     console.log("Historique des prompts :", promptList);
   }
 
+  // ========================================
+  // Fonction de téléchargement
+
+  function setupDownloadButton() {
+    const downloadBtn = document.getElementById("downloadBtn");
+    if (!downloadBtn) return;
+
+    downloadBtn.addEventListener("click", () => {
+      const svgContainer = document.getElementById("svg-container");
+      const svgElement = svgContainer?.querySelector("svg");
+
+      if (!svgElement) {
+        alert("Aucun SVG à télécharger.");
+        return;
+      }
+
+      // Récupérer le code SVG complet
+      const svgCode = svgElement.outerHTML;
+
+      // Récupérer le nom du SVG depuis le titre
+      const titleElement = document.querySelector("h1");
+      const svgName = titleElement?.textContent?.trim() || "mon-svg";
+
+      // Créer un blob avec le code SVG
+      const blob = new Blob([svgCode], { type: "image/svg+xml" });
+
+      // Créer un lien de téléchargement
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${svgName}.svg`;
+
+      // Déclencher le téléchargement
+      document.body.appendChild(link);
+      link.click();
+
+      // Nettoyer
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Feedback visuel
+      const originalHTML = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Téléchargé !
+      `;
+      downloadBtn.classList.add("btn-success");
+
+      setTimeout(() => {
+        downloadBtn.innerHTML = originalHTML;
+        downloadBtn.classList.remove("btn-success");
+      }, 2000);
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initializePromptList();
+    setupDownloadButton();
 
     const editButton = document.getElementById("edit-button");
     const input = document.getElementById("user-prompt");
