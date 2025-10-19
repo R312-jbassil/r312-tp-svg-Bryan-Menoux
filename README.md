@@ -3,7 +3,10 @@
 - Netlify:
 - URL du Site : tp-svg.bryan-menoux.fr
 
-_Important /!_
+![IMPORTANT - Déploiement échoué](https://img.shields.io/badge/IMPORTANT-D%C3%A9ploiement-red)
+
+**IMPORTANT — VPS bloqué lors d'un déploiement (connexion Google)**
+
 J’ai déployé mon site sur le VPS qui nous a été prêté. La base du TP fonctionnait correctement, mais lors d’un déploiement le VPS s’est complètement bloqué.
 
 Ce deploy concernait la partie connexion via google. Mon problème venait du fait que la connexion fonctionnait en locale mais pas sur la version en ligne. C'est pour cela que j'essayais de le corriger mais malheureusement c'est à ce moment là que le vps s'est mis à ne plus répondre.

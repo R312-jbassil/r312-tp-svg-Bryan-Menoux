@@ -65,7 +65,37 @@ export async function getAllSvgs() {
 
 export async function deleteSvg(id) {
   try {
+    // Récupérer les informations du SVG avant de le supprimer
+    const svg = await pb.collection("svg").getOne(id);
+
+    // Supprimer le SVG de la collection svg
     await pb.collection("svg").delete(id);
+
+    // Vérifier et supprimer l'entrée correspondante dans public_galery si elle existe
+    try {
+      const existingPublic = await pb.collection("public_galery").getFullList({
+        filter: `user = "${svg.user}" && nom = "${svg.nom.replace(
+          /"/g,
+          '\\"'
+        )}"`,
+      });
+
+      const exactMatch = existingPublic.find(
+        (pub) => pub.code_svg === svg.code_svg
+      );
+
+      if (exactMatch) {
+        await pb.collection("public_galery").delete(exactMatch.id);
+        console.log("SVG public supprimé de la galerie publique");
+      }
+    } catch (publicErr) {
+      // Erreur lors de la suppression de public_galery, mais le SVG principal est déjà supprimé
+      console.warn(
+        "Erreur lors de la suppression de public_galery:",
+        publicErr
+      );
+    }
+
     return true;
   } catch (err) {
     console.error("Erreur lors de la suppression du SVG :", err);
