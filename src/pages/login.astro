@@ -105,8 +105,10 @@ if (Astro.locals.user) {
     </div>
   </div>
 
-  <script>
+  <script type="module">
     //@ts-nocheck
+    import pb from "../lib/pocketbase.js";
+
     localStorage.removeItem("user");
     const form = document.getElementById("login-form");
     const status = document.getElementById("status");
@@ -174,9 +176,6 @@ if (Astro.locals.user) {
     googleButton?.addEventListener("click", async () => {
       setStatus("Connexion avec Google...", "");
       try {
-        // importe ton module pocketbase client-side
-        const { default: pb } = await import("../lib/pocketbase.js");
-
         // Authentification OAuth2 avec Google
         await pb.collection("users").authWithOAuth2({
           provider: "google",
