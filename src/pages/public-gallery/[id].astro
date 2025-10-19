@@ -84,7 +84,7 @@ if (user && user.avatar) {
                 stroke-width="2"
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-            Retour à la galerie
+            {ui[locale].publicGallery.backToGallery}
           </a>
 
           <!-- Section centrale avec avatar et infos -->
@@ -130,7 +130,7 @@ if (user && user.avatar) {
                     ></path>
                   </svg>
                   <span class="font-semibold text-base-content"
-                    >Par {userName}</span
+                    >{ui[locale].publicGallery.by} {userName}</span
                   >
                 </div>
 
@@ -151,7 +151,8 @@ if (user && user.avatar) {
                     ></path>
                   </svg>
                   <span class="text-base-content/80">
-                    Publié le {
+                    {ui[locale].publicGallery.publishedOn}
+                    {
                       new Date(svg.created).toLocaleDateString(
                         locale === "fr" ? "fr-FR" : "en-US",
                         { day: "numeric", month: "long", year: "numeric" }
@@ -179,8 +180,10 @@ if (user && user.avatar) {
                         />
                       </svg>
                       <span class="text-base-content/80">
-                        {chatHistory.length} étape
-                        {chatHistory.length > 1 ? "s" : ""}
+                        {chatHistory.length}{" "}
+                        {chatHistory.length > 1
+                          ? ui[locale].publicGallery.stepsPlural
+                          : ui[locale].publicGallery.steps}
                       </span>
                     </div>
                   )
@@ -206,7 +209,7 @@ if (user && user.avatar) {
                   d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                 ></path>
               </svg>
-              Partager
+              {ui[locale].publicGallery.share}
             </button>
             <button id="downloadBtn" class="btn btn-ghost btn-sm gap-2">
               <svg
@@ -223,7 +226,7 @@ if (user && user.avatar) {
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 ></path>
               </svg>
-              Télécharger
+              {ui[locale].publicGallery.download}
             </button>
           </div>
         </div>
@@ -234,7 +237,9 @@ if (user && user.avatar) {
     <div class="flex flex-1 gap-4 overflow-hidden p-4">
       <!-- Rendu SVG -->
       <div class="flex w-1/2 flex-col gap-2">
-        <h2 class="text-lg font-semibold text-primary">Rendu SVG</h2>
+        <h2 class="text-lg font-semibold text-primary">
+          {ui[locale].publicGallery.svgRender}
+        </h2>
         <div
           class="flex flex-1 items-center justify-center overflow-auto rounded-2xl border-2 border-primary/30 bg-base-100 p-6"
         >
@@ -244,7 +249,9 @@ if (user && user.avatar) {
 
       <!-- Code SVG -->
       <div class="flex w-1/2 flex-col gap-2">
-        <h2 class="text-lg font-semibold text-secondary">Code SVG</h2>
+        <h2 class="text-lg font-semibold text-secondary">
+          {ui[locale].publicGallery.svgCode}
+        </h2>
         <div
           class="mockup-window flex-1 overflow-hidden border border-secondary/20 bg-base-300"
         >
@@ -259,7 +266,7 @@ if (user && user.avatar) {
       chatHistory.length > 0 && (
         <div class="border-t-2 border-primary/30 bg-base-100 p-4">
           <h3 class="mb-3 text-lg font-semibold text-primary">
-            Historique de création
+            {ui[locale].publicGallery.creationHistory}
           </h3>
           <div class="flex max-h-48 flex-col gap-2 overflow-y-auto">
             {chatHistory.map((msg: any, index: any) => (
@@ -284,7 +291,13 @@ if (user && user.avatar) {
   </div>
 </Layout>
 
-<script define:vars={{ svgCode: svg.code_svg, svgNom: svg.nom || "svg" }}>
+<script
+  define:vars={{
+    svgCode: svg.code_svg,
+    svgNom: svg.nom || "svg",
+    translations: ui[locale].publicGallery,
+  }}
+>
   // ========================================
   // Fonction de partage
 
@@ -310,7 +323,7 @@ if (user && user.avatar) {
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
-          Lien copié !
+          ${translations.linkCopied}
         `;
         btn.classList.add("btn-success");
 
@@ -352,7 +365,7 @@ if (user && user.avatar) {
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
       </svg>
-      Téléchargé !
+      ${translations.downloaded}
     `;
     btn.classList.add("btn-success");
 

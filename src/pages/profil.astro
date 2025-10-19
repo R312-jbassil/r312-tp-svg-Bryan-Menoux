@@ -25,8 +25,8 @@ try {
     <!-- ============================================ -->
     <div class="border-b-2 border-primary/30 bg-base-100 p-4">
       <div class="flex items-center justify-between">
-        <button id="back-btn" class="btn btn-ghost"> ← Retour </button>
-        <h1 class="text-2xl font-bold text-primary">Mon Profil</h1>
+        <button id="back-btn" class="btn btn-ghost"> {ui[locale].profile.backToGallery} </button>
+        <h1 class="text-2xl font-bold text-primary">{ui[locale].profile.title}</h1>
         <div class="w-[180px]"></div>
       </div>
     </div>
@@ -70,7 +70,7 @@ try {
                   <div
                     class="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <div class="badge badge-primary badge-sm">Modifier</div>
+                    <div class="badge badge-primary badge-sm">{ui[locale].profile.changeAvatar}</div>
                   </div>
                 </div>
 
@@ -98,7 +98,7 @@ try {
                         stroke-width="2"
                         d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    Changer la photo
+                    {ui[locale].profile.changeAvatar}
                   </label>
                   <input
                     id="avatar-input"
@@ -126,7 +126,7 @@ try {
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
-                        Supprimer
+                        {ui[locale].profile.removeAvatar}
                       </button>
                     )
                   }
@@ -136,7 +136,7 @@ try {
                   class="stats stats-vertical shadow w-full max-w-xs bg-base-100"
                 >
                   <div class="stat py-3">
-                    <div class="stat-title text-xs">Membre depuis</div>
+                    <div class="stat-title text-xs">{ui[locale].profile.memberSince}</div>
                     <div class="stat-value text-sm text-primary">
                       {
                         userRecord &&
@@ -170,10 +170,10 @@ try {
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       ></path>
                     </svg>
-                    Informations personnelles
+                    {ui[locale].profile.personalInfo}
                   </h2>
                   <p class="text-sm text-base-content/60">
-                    Gérez vos informations de profil
+                    {ui[locale].profile.manageProfile}
                   </p>
                 </div>
 
@@ -198,14 +198,14 @@ try {
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         ></path>
                       </svg>
-                      Nom complet
+                      {ui[locale].profile.fullName}
                     </span>
                   </label>
                   <input
                     id="name-input"
                     type="text"
                     value={userRecord?.name || ""}
-                    placeholder="Votre nom complet"
+                    placeholder={ui[locale].profile.fullNamePlaceholder}
                     class="input input-bordered input-lg w-full focus:input-primary transition-all"
                   />
                 </div>
@@ -229,7 +229,7 @@ try {
                           d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                         ></path>
                       </svg>
-                      Adresse email
+                      {ui[locale].profile.emailAddress}
                     </span>
                   </label>
                   <div class="relative">
@@ -264,7 +264,7 @@ try {
                     id="cancel-btn"
                     class="btn btn-ghost btn-lg"
                   >
-                    Annuler
+                    {ui[locale].profile.cancel}
                   </button>
                   <button
                     type="submit"
@@ -284,7 +284,7 @@ try {
                         stroke-width="2"
                         d="M5 13l4 4L19 7"></path>
                     </svg>
-                    Enregistrer les modifications
+                    {ui[locale].profile.save}
                   </button>
                 </div>
               </form>
@@ -316,10 +316,10 @@ try {
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                     ></path>
                   </svg>
-                  Sécurité du compte
+                  {ui[locale].profile.accountSecurity}
                 </h2>
                 <p class="text-sm text-base-content/60">
-                  Protégez votre compte
+                  {ui[locale].profile.protectAccount}
                 </p>
               </div>
             </div>
@@ -346,7 +346,7 @@ try {
                     d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
                   ></path>
                 </svg>
-                <span class="font-semibold">Changer de mot de passe</span>
+                <span class="font-semibold">{ui[locale].profile.changePassword}</span>
               </span>
               <svg
                 id="chevron-icon"
@@ -373,7 +373,7 @@ try {
                 <div class="form-control">
                   <label class="label">
                     <span class="label-text font-semibold"
-                      >Ancien mot de passe</span
+                      >{ui[locale].profile.oldPassword}</span
                     >
                   </label>
                   <input
@@ -387,7 +387,7 @@ try {
                 <div class="form-control">
                   <label class="label">
                     <span class="label-text font-semibold"
-                      >Nouveau mot de passe</span
+                      >{ui[locale].profile.newPassword}</span
                     >
                   </label>
                   <input
@@ -412,7 +412,7 @@ try {
                           d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         ></path>
                       </svg>
-                      Minimum 8 caractères
+                      {ui[locale].profile.minCharacters}
                     </span>
                   </label>
                 </div>
@@ -420,7 +420,7 @@ try {
                 <div class="form-control">
                   <label class="label">
                     <span class="label-text font-semibold"
-                      >Confirmer le mot de passe</span
+                      >{ui[locale].profile.confirmPassword}</span
                     >
                   </label>
                   <input
@@ -437,7 +437,7 @@ try {
                     id="cancel-password-btn"
                     class="btn btn-ghost btn-lg flex-1"
                   >
-                    Annuler
+                    {ui[locale].profile.cancel}
                   </button>
                   <button
                     type="submit"
@@ -457,7 +457,7 @@ try {
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       ></path>
                     </svg>
-                    Mettre à jour
+                    {ui[locale].profile.updatePassword}
                   </button>
                 </div>
               </form>
@@ -471,12 +471,12 @@ try {
   <!-- Message de confirmation -->
   <div class="toast toast-top toast-end" id="toast" style="display: none;">
     <div class="alert alert-success">
-      <span id="toast-message">Profil mis à jour avec succès !</span>
+      <span id="toast-message">{ui[locale].profile.profileUpdated}</span>
     </div>
   </div>
 </Layout>
 
-<script>
+<script define:vars={{ translations: ui[locale].profile }}>
   //@ts-nocheck
 
   let currentUser = null;
@@ -525,12 +525,16 @@ try {
     }
   }
 
-  await loadUserData();
+  // ========================================
+  // Initialisation
+  // ========================================
+  (async () => {
+    await loadUserData();
 
-  // ========================================
-  // Menu changement de mot de passe
-  // ========================================
-  const togglePasswordBtn = document.getElementById("toggle-password-form");
+    // ========================================
+    // Menu changement de mot de passe
+    // ========================================
+    const togglePasswordBtn = document.getElementById("toggle-password-form");
   const passwordFormContainer = document.getElementById(
     "password-form-container"
   );
@@ -598,7 +602,7 @@ try {
         reader.readAsDataURL(file);
 
         if (!currentUser) {
-          showToast("Utilisateur non connecté", true);
+          showToast(translations.userNotConnected, true);
           return;
         }
 
@@ -613,12 +617,12 @@ try {
           });
 
           if (!response.ok) {
-            throw new Error("Erreur lors de la mise à jour de l'avatar");
+            throw new Error(translations.errorUpdatingAvatar);
           }
 
           const data = await response.json();
 
-          showToast("Avatar mis à jour avec succès !");
+          showToast(translations.avatarUpdated);
 
           // Mettre à jour localStorage
           if (data.user) {
@@ -631,7 +635,7 @@ try {
           }
         } catch (error) {
           console.error("Erreur lors de la mise à jour de l'avatar:", error);
-          showToast("Erreur lors de la mise à jour de l'avatar", true);
+          showToast(translations.errorUpdatingAvatar, true);
         }
       }
     });
@@ -642,7 +646,7 @@ try {
   if (removeAvatarBtn) {
     removeAvatarBtn.addEventListener("click", async () => {
       if (!currentUser) {
-        showToast("Utilisateur non connecté", true);
+        showToast(translations.userNotConnected, true);
         return;
       }
 
@@ -657,7 +661,7 @@ try {
         });
 
         if (!response.ok) {
-          throw new Error("Erreur lors de la suppression");
+          throw new Error(translations.errorRemovingAvatar);
         }
 
         if (avatarPreview) {
@@ -666,7 +670,7 @@ try {
         }
 
         removeAvatarBtn.style.display = "none";
-        showToast("Avatar supprimé avec succès !");
+        showToast(translations.avatarRemoved);
 
         currentUser.avatar = null;
         localStorage.setItem("user", JSON.stringify(currentUser));
@@ -676,7 +680,7 @@ try {
         }, 1000);
       } catch (error) {
         console.error("Erreur lors de la suppression de l'avatar:", error);
-        showToast("Erreur lors de la suppression de l'avatar", true);
+        showToast(translations.errorRemovingAvatar, true);
       }
     });
   }
@@ -690,7 +694,7 @@ try {
       e.preventDefault();
 
       if (!currentUser) {
-        showToast("Utilisateur non connecté", true);
+        showToast(translations.userNotConnected, true);
         return;
       }
 
@@ -714,12 +718,12 @@ try {
         });
 
         if (!response.ok) {
-          throw new Error("Erreur lors de la mise à jour");
+          throw new Error(translations.errorUpdatingProfile);
         }
 
         const data = await response.json();
 
-        showToast("Profil mis à jour avec succès !");
+        showToast(translations.profileUpdated);
 
         if (data.user) {
           currentUser = data.user;
@@ -731,7 +735,7 @@ try {
         }
       } catch (error) {
         console.error("Erreur lors de la mise à jour du profil:", error);
-        showToast("Erreur lors de la mise à jour du profil", true);
+        showToast(translations.errorUpdatingProfile, true);
       } finally {
         if (saveBtn) saveBtn.disabled = false;
       }
@@ -755,7 +759,7 @@ try {
       e.preventDefault();
 
       if (!currentUser) {
-        showToast("Utilisateur non connecté", true);
+        showToast(translations.userNotConnected, true);
         return;
       }
 
@@ -764,12 +768,12 @@ try {
       const confirmPassword = document.getElementById("confirm-password");
 
       if (newPassword?.value !== confirmPassword?.value) {
-        showToast("Les mots de passe ne correspondent pas", true);
+        showToast(translations.passwordMismatch, true);
         return;
       }
 
       if (!newPassword?.value || newPassword.value.length < 8) {
-        showToast("Le mot de passe doit contenir au moins 8 caractères", true);
+        showToast(translations.passwordTooShort, true);
         return;
       }
 
@@ -786,21 +790,19 @@ try {
         });
 
         if (!response.ok) {
-          throw new Error("Erreur lors de la mise à jour du mot de passe");
+          throw new Error(translations.error);
         }
 
-        showToast("Mot de passe mis à jour avec succès !");
+        showToast(translations.passwordUpdated);
 
         if (oldPassword) oldPassword.value = "";
         if (newPassword) newPassword.value = "";
         if (confirmPassword) confirmPassword.value = "";
       } catch (error) {
         console.error("Erreur lors de la mise à jour du mot de passe:", error);
-        showToast(
-          "Erreur lors de la mise à jour du mot de passe. Vérifiez votre ancien mot de passe.",
-          true
-        );
+        showToast(translations.error, true);
       }
     });
   }
+  })(); // Fin de l'IIFE async
 </script>

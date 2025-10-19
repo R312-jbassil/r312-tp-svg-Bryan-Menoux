@@ -36,7 +36,9 @@ try {
     <!-- En-tête -->
     <div class="border-b-2 border-primary/30 bg-base-100 p-4">
       <div class="flex items-center justify-between">
-        <a href="/gallery" class="btn btn-ghost"> ← Retour à ma galerie </a>
+        <a href="/gallery" class="btn btn-ghost">
+          ← {ui[locale].gallery.backToGallery}
+        </a>
         <div class="flex-1 text-center">
           <h1 class="text-2xl font-bold text-primary">
             {svg?.nom || "Mon SVG"}
@@ -65,7 +67,7 @@ try {
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
             ></path>
           </svg>
-          Télécharger
+          {ui[locale].gallery.download}
         </button>
       </div>
     </div>
@@ -171,7 +173,7 @@ try {
   </div>
 </Layout>
 
-<script>
+<script define:vars={{ translations: ui[locale].gallery }}>
   //@ts-nocheck
   // ========================================
   // Initialisation
@@ -365,7 +367,7 @@ try {
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        Téléchargé !
+        ${translations.downloaded}
       `;
       downloadBtn.classList.add("btn-success");
 
