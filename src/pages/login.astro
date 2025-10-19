@@ -181,7 +181,7 @@ if (Astro.locals.user) {
         const localRedirect =
           window.location.hostname === "localhost" ||
           window.location.hostname === "127.0.0.1"
-            ? "http://127.0.0.1:8087/api/oauth2-redirect" // ← ajuste le port si nécessaire (8087 ou 8090)
+            ? "http://127.0.0.1:8090/api/oauth2-redirect"
             : window.location.origin.replace(/\/+$/, "") +
               "/api/oauth2-redirect";
 

@@ -10,8 +10,8 @@ const isLocal =
 const baseUrl = isLocal
   ? "http://127.0.0.1:8090"
   : typeof window !== "undefined"
-  ? `${window.location.protocol}//${window.location.hostname}:8087`
-  : "http://localhost:8087";
+  ? `${window.location.origin}/api`
+  : "http://localhost:8090";
 
 const pb = new PocketBase(baseUrl);
 
