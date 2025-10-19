@@ -177,17 +177,9 @@ if (Astro.locals.user) {
         // importe ton module pocketbase client-side
         const { default: pb } = await import("../lib/pocketbase.js");
 
-        // définit explicitement le redirectUrl local (doit correspondre exactement à l'URI autorisée dans Google Console)
-        const localRedirect =
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"
-            ? "http://127.0.0.1:8090/api/oauth2-redirect"
-            : window.location.origin.replace(/\/+$/, "") +
-              "/api/oauth2-redirect";
-
+        // Authentification OAuth2 avec Google
         await pb.collection("users").authWithOAuth2({
           provider: "google",
-          redirectUrl: localRedirect,
         });
 
         const token = pb.authStore.token;

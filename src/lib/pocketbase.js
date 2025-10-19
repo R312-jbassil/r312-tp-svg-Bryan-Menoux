@@ -1,17 +1,16 @@
 import PocketBase from "pocketbase";
 
-// Détection de l'environnement
+// Détection de l'environnement basée sur le hostname
 const isLocal =
   typeof window !== "undefined"
     ? window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1"
     : import.meta.env.MODE === "development";
 
+// URL de PocketBase
 const baseUrl = isLocal
   ? "http://127.0.0.1:8090"
-  : typeof window !== "undefined"
-  ? `${window.location.origin}/api`
-  : "http://localhost:8090";
+  : "https://tp-svg.bryan-menoux.fr:8087";
 
 const pb = new PocketBase(baseUrl);
 
