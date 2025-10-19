@@ -79,19 +79,19 @@ if (Astro.locals.user) {
             <path
               fill="#EA4335"
               d="M255.68 133.45c0-10.57-.86-18.27-2.72-26.24H130.55v47.6h71.95c-1.45 11.85-9.28 29.73-26.7 41.75l-.24 1.6 38.79 30.05 2.69 0.27c24.7-22.8 38.44-56.3 38.44-95.03"
-            />
+            ></path>
             <path
               fill="#34A853"
               d="M130.55 261.1c34.99 0 64.37-11.64 85.83-31.72l-40.89-31.64c-10.95 7.6-25.64 12.9-44.94 12.9-34.32 0-63.45-22.8-73.85-54.4l-1.52 0.13-39.99 31.06-0.52 1.47C35.48 231.54 79.92 261.1 130.55 261.1"
-            />
+            ></path>
             <path
               fill="#4A90E2"
               d="M56.7 156.24c-2.75-8.12-4.35-16.8-4.35-25.74s1.6-17.62 4.23-25.74l-0.07-1.73-40.5-31.59-1.32 0.62C5.24 92.26 0 110.14 0 130.5s5.24 38.24 14.68 54.44l42.02-28.7"
-            />
+            ></path>
             <path
               fill="#FBBC05"
               d="M130.55 50.5c24.34 0 40.75 10.52 50.1 19.32l36.54-35.77C194.8 12.3 165.54 0 130.55 0 79.92 0 35.48 29.56 14.68 76.06l41.96 28.7c10.47-34.3 39.59-54.26 73.91-54.26"
-            />
+            ></path>
           </svg>
           Continuer avec Google
         </button>
@@ -174,8 +174,22 @@ if (Astro.locals.user) {
     googleButton?.addEventListener("click", async () => {
       setStatus("Connexion avec Google...", "");
       try {
+        // importe ton module pocketbase client-side
         const { default: pb } = await import("../lib/pocketbase.js");
-        await pb.collection("users").authWithOAuth2({ provider: "google" });
+
+        // définit explicitement le redirectUrl local (doit correspondre exactement à l'URI autorisée dans Google Console)
+        const localRedirect =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "http://127.0.0.1:8087/api/oauth2-redirect" // ← ajuste le port si nécessaire (8087 ou 8090)
+            : window.location.origin.replace(/\/+$/, "") +
+              "/api/oauth2-redirect";
+
+        await pb.collection("users").authWithOAuth2({
+          provider: "google",
+          redirectUrl: localRedirect,
+        });
+
         const token = pb.authStore.token;
         const record = JSON.parse(JSON.stringify(pb.authStore.model || {}));
         if (!token || !record?.id) {
@@ -183,11 +197,11 @@ if (Astro.locals.user) {
         }
         await finalizeSession({ token, record });
         pb.authStore.clear();
-        setStatus("Connexion reussie !", "success");
+        setStatus("Connexion réussie !", "success");
         setTimeout(() => (window.location.href = "/"), 800);
       } catch (err) {
         console.error("Google OAuth error:", err);
-        setStatus("Echec de connexion Google", "error");
+        setStatus("Échec de connexion Google", "error");
       }
     });
   </script>
