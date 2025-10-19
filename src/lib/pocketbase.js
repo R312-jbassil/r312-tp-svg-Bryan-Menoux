@@ -10,7 +10,7 @@ const isLocal =
 // URL de PocketBase
 const baseUrl = isLocal
   ? "http://127.0.0.1:8090"
-  : "https://tp_svg.bryan-menoux.fr:443";
+  : "https://tp-svg.bryan-menoux.fr:8087";
 
 const pb = new PocketBase(baseUrl);
 
