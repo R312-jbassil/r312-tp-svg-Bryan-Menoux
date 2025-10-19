@@ -14,29 +14,33 @@ type SessionUser = {
 
 const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 const user = (Astro.locals.user as SessionUser | null) ?? null;
-const avatarFile = user?.avatar;
+
 let avatarUrl: string | null = null;
-if (avatarFile) {
+if (user && user.avatar) {
   try {
-    avatarUrl = pb.files.getUrl(
-      user as unknown as Record<string, unknown>,
-      avatarFile,
-      {
-        thumb: "100x100",
-      }
-    );
+    const isLocal =
+      typeof window !== "undefined"
+        ? window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+        : import.meta.env.MODE === "development";
+
+    const baseUrl = isLocal
+      ? "http://127.0.0.1:8090"
+      : "http://tp-svg.bryan-menoux.fr:8087";
+
+    const collectionId = "_pb_users_auth_";
+    avatarUrl = `${baseUrl}/api/files/${collectionId}/${user.id}/${user.avatar}?thumb=100x100`;
   } catch (error) {
-    try {
-      const baseUrl = pb.baseUrl ?? "";
-      const collectionId = user?.collectionId ?? "users";
-      avatarUrl = `${baseUrl}/api/files/${collectionId}/${user?.id}/${avatarFile}?thumb=100x100`;
-    } catch {
-      avatarUrl = null;
-    }
+    console.error(
+      "Erreur lors de la construction de l'URL de l'avatar:",
+      error
+    );
+    avatarUrl = null;
   }
 }
+
 const displayName =
-  user?.username ?? user?.name ?? user?.email ?? ui[locale].nav.profile;
+  user?.name ?? user?.username ?? user?.email ?? ui[locale].nav.profile;
 const userInitial = displayName.trim().charAt(0).toUpperCase() || "U";
 const defaultTheme = "dracula";
 const themeCookie = Astro.cookies.get("theme")?.value;

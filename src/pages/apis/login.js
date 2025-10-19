@@ -1,11 +1,12 @@
-// src/pages/api/login.ts
+// ========================================
+// Configuration et imports
+
 import pb from "../../lib/pocketbase";
 import { Collections } from "../../utils/pocketbase-types";
 
-/**
- * Permet de tester facilement dans le navigateur ou avec curl.
- * Exemple : GET https://tp-svg.bryan-menoux.fr/api/login
- */
+// ========================================
+// Endpoint de test
+
 export const GET = async () => {
   return new Response(
     JSON.stringify({ message: "Endpoint /api/login is alive" }),
@@ -16,11 +17,14 @@ export const GET = async () => {
   );
 };
 
-/**
- * Authentifie un utilisateur via PocketBase
- */
+// ========================================
+// Endpoint de connexion
+
 export const POST = async ({ request, cookies }) => {
   const payload = await request.json();
+
+  // ========================================
+  // Gestion OAuth (Google)
 
   if (payload.token && payload.record) {
     try {
@@ -47,15 +51,24 @@ export const POST = async ({ request, cookies }) => {
     }
   }
 
+  // ========================================
+  // Connexion par email/mot de passe
+
   const { email, password } = payload;
 
+  console.log("Tentative de connexion avec email:", email);
+
   try {
-    // Authentifie l'utilisateur dans PocketBase
+    // ========================================
+    // Authentification
+
     const authData = await pb
       .collection(Collections.Users)
       .authWithPassword(email, password);
 
-    // Enregistre le cookie sécurisé
+    // ========================================
+    // Enregistrement du cookie
+
     cookies.set("pb_auth", pb.authStore.exportToCookie(), {
       path: "/",
       httpOnly: true,

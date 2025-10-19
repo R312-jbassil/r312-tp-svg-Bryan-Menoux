@@ -1,25 +1,50 @@
 ---
+// ========================================
+// Configuration et imports
+
 import Layout from "../../layouts/Layout.astro";
 import pb from "../../lib/pocketbase";
 import { Collections } from "../../utils/pocketbase-types";
 import { ui } from "../../i18n/ui.js";
 
+// ========================================
+// Récupération des données utilisateur
+
 const locale = (Astro.locals.lang as "en" | "fr") ?? "fr";
 const user = Astro.locals.user;
 
-// Fetch only the current user's SVGs when the page renders
+// ========================================
+// Chargement des SVG de l'utilisateur
+
 const svgList = user
   ? await pb.collection(Collections.Svg).getFullList({
-      sort: "-created", // Latest SVGs first
-      filter: `user = "${user.id}"`, // Only SVGs tied to the logged-in user
+      sort: "-created",
+      filter: `user = "${user.id}"`,
     })
   : [];
+
+// ========================================
+// Chargement des SVG publics
+
+const publicSvgList = user
+  ? await pb.collection("public_galery").getFullList({
+      filter: `user = "${user.id}"`,
+    })
+  : [];
+
+const publicSvgMap = new Map();
+publicSvgList.forEach((pubSvg) => {
+  const key = `${pubSvg.nom}_${pubSvg.code_svg}`;
+  publicSvgMap.set(key, pubSvg.id);
+});
 ---
 
 <Layout>
   <div class="flex flex-col gap-6 bg-base-200 min-h-screen p-6">
+    <!-- Titre de la page -->
     <h1 class="text-3xl font-bold text-violet-400">{ui[locale].gallery.title}</h1>
 
+    <!-- Liste des SVG -->
     {
       svgList.length === 0 ? (
         <div class="alert alert-info shadow-lg">
@@ -27,7 +52,10 @@ const svgList = user
         </div>
       ) : (
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {svgList.map((svg) => (
+          {svgList.map((svg) => {
+            const key = `${svg.nom}_${svg.code_svg}`;
+            const isPublic = publicSvgMap.has(key);
+            return (
             <div class="card bg-base-100 border-2 border-violet-500 shadow-xl h-full">
               <!-- SVG preview area -->
               <div class="bg-zinc-900 flex items-center justify-center aspect-video overflow-hidden rounded-t-xl">
@@ -41,6 +69,9 @@ const svgList = user
                     <span class="badge badge-secondary">
                       {svg.nom || ui[locale].gallery.noName}
                     </span>
+                    {isPublic && (
+                      <span class="badge badge-success badge-sm">En ligne</span>
+                    )}
                   </h2>
                   <p class="text-xs text-zinc-500 mt-1">
                     {ui[locale].gallery.created}{" "}
@@ -49,9 +80,15 @@ const svgList = user
                     )}
                   </p>
                 </div>
-                <div class="card-actions justify-end">
+                <div class="card-actions justify-end flex-wrap gap-2">
                   <button class="btn btn-sm bg-primary">
                     <a href={`/gallery/${svg.id}`}>{ui[locale].gallery.viewMore}</a>
+                  </button>
+                  <button class={`btn btn-sm toggle-public-button ${isPublic ? 'btn-success' : 'btn-info'}`} data-id={svg.id} data-is-public={isPublic}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm7.5-6.923c-.67.204-1.335.82-1.887 1.855A7.97 7.97 0 0 0 5.145 4H7.5V1.077zM4.09 4a9.267 9.267 0 0 1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.025 7.025 0 0 0 2.255 4H4.09zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a6.958 6.958 0 0 0-.656 2.5h2.49zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5H4.847zM8.5 5v2.5h2.99a12.495 12.495 0 0 0-.337-2.5H8.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5H4.51zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5H8.5zM5.145 12c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887 1.855V12H5.145zm.182 2.472a6.696 6.696 0 0 1-.597-.933A9.268 9.268 0 0 1 4.09 12H2.255a7.024 7.024 0 0 0 3.072 2.472zM3.82 11a13.652 13.652 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5H3.82zm6.853 3.472A7.024 7.024 0 0 0 13.745 12H11.91a9.27 9.27 0 0 1-.64 1.539 6.688 6.688 0 0 1-.597.933zM8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855.173-.324.33-.682.468-1.068H8.5zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.65 13.65 0 0 1-.312 2.5zm2.802-3.5a6.959 6.959 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5h2.49zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7.024 7.024 0 0 0-3.072-2.472c.218.284.418.598.597.933zM10.855 4a7.966 7.966 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4h2.355z"/>
+                    </svg>
+                    Public
                   </button>
                   <button class="btn btn-error btn-sm delete-button" data-id={svg.id}>
                     {ui[locale].gallery.deleteButton}
@@ -59,12 +96,13 @@ const svgList = user
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )
     }
   </div>
 
+  <!-- Popup confirmation suppression -->
   <dialog id="confirm-modal" class="modal">
     <div class="modal-box">
       <h3 class="font-bold text-lg">{ui[locale].gallery.confirmDelete}</h3>
@@ -76,17 +114,51 @@ const svgList = user
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- Popup avertissement publication -->
+  <dialog id="warning-modal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg text-warning">⚠️ Attention</h3>
+      <p class="py-4">
+        En rendant votre création publique, elle sera visible par tous les utilisateurs dans la galerie publique. 
+        Vous pourrez la rendre privée à tout moment en cliquant à nouveau sur le bouton.
+      </p>
+      <div class="modal-action flex-col gap-2">
+        <label class="label cursor-pointer justify-start gap-2">
+          <input type="checkbox" id="dont-show-again" class="checkbox checkbox-sm" />
+          <span class="label-text">Ne plus afficher ce message</span>
+        </label>
+        <div class="flex gap-2 w-full justify-end">
+          <button id="cancel-warning" class="btn btn-ghost">Annuler</button>
+          <button id="confirm-warning" class="btn btn-primary">J'ai compris</button>
+        </div>
+      </div>
+    </div>
   </dialog>
 </Layout>
 
 <script>
   //@ts-nocheck
+  // ========================================
+  // Imports et initialisation
+
   import { deleteSvg } from "../../lib/pocketbase";
 
   let currentId = null;
+  let pendingToggleButton = null;
+  
   const modal = document.getElementById("confirm-modal");
   const confirmBtn = document.getElementById("confirm-delete");
   const cancelBtn = document.getElementById("cancel-delete");
+  
+  const warningModal = document.getElementById("warning-modal");
+  const confirmWarningBtn = document.getElementById("confirm-warning");
+  const cancelWarningBtn = document.getElementById("cancel-warning");
+  const dontShowAgainCheckbox = document.getElementById("dont-show-again");
+
+  // ========================================
+  // Gestion suppression
 
   document.querySelectorAll(".delete-button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -109,6 +181,72 @@ const svgList = user
   cancelBtn.addEventListener("click", () => {
     currentId = null;
     modal.close();
+  });
+
+  // ========================================
+  // Gestion popup avertissement
+
+  confirmWarningBtn.addEventListener("click", () => {
+    if (dontShowAgainCheckbox.checked) {
+      localStorage.setItem("hidePublicWarning", "true");
+    }
+    warningModal.close();
+    if (pendingToggleButton) {
+      performToggle(pendingToggleButton);
+      pendingToggleButton = null;
+    }
+  });
+
+  cancelWarningBtn.addEventListener("click", () => {
+    warningModal.close();
+    pendingToggleButton = null;
+  });
+
+  // ========================================
+  // Fonction basculement public/privé
+
+  async function performToggle(btn) {
+    const svgId = btn.dataset.id;
+    try {
+      const res = await fetch("/apis/togglePublic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ svgId }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Reload to update the status
+        location.reload();
+      }
+    } catch (err) {
+      console.error("Error toggling public status:", err);
+      alert("Erreur lors du changement de statut public");
+    }
+  }
+
+  // ========================================
+  // Boutons basculement avec avertissement
+
+  document.querySelectorAll(".toggle-public-button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const isCurrentlyPublic = btn.dataset.isPublic === "true";
+      
+      // Si déjà public, on toggle directement (pour rendre privé)
+      if (isCurrentlyPublic) {
+        performToggle(btn);
+        return;
+      }
+      
+      // Sinon, vérifier si on doit afficher le warning
+      const hideWarning = localStorage.getItem("hidePublicWarning");
+      if (hideWarning === "true") {
+        performToggle(btn);
+      } else {
+        pendingToggleButton = btn;
+        warningModal.showModal();
+      }
+    });
   });
 </script>
 

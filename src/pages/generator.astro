@@ -1,63 +1,77 @@
 ---
+// ========================================
+// Configuration et imports
+
 import Layout from "../layouts/Layout.astro";
 import { ui } from "../i18n/ui.js";
+
 const locale = (Astro.locals.lang as "en" | "fr") ?? "en";
+const user = Astro.locals.user;
 console.log("Locale in generator:", locale);
 ---
 
 <Layout>
-  <div class="flex flex-col gap-6 bg-base-200 min-h-screen p-6">
-    <div class="flex flex-col lg:flex-row flex-1 gap-6">
-      <div
-        id="svg-container"
-        class="flex-1 bg-base-100 rounded-2xl border-2 border-violet-500 flex items-center justify-center"
-      >
-        <span class="text-zinc-400">{ui[locale].generator.waiting}</span>
+  <div class="flex h-full flex-col overflow-hidden bg-base-200">
+    <!-- Zone principale -->
+    <div class="flex flex-1 gap-4 overflow-hidden p-4">
+      <!-- Rendu SVG -->
+      <div class="flex w-1/2 flex-col gap-2">
+        <h2 class="text-lg font-semibold text-primary">
+          {ui[locale].generator.title || "Rendu SVG"}
+        </h2>
+        <div
+          id="svg-container"
+          class="flex flex-1 items-center justify-center overflow-auto rounded-2xl border-2 border-primary/30 bg-base-100 p-6"
+        >
+          <span class="text-base-content/60"
+            >{ui[locale].generator.waiting}</span
+          >
+        </div>
       </div>
 
-      <div
-        class="flex-1 bg-base-100 rounded-2xl border-2 border-violet-500 overflow-hidden"
-      >
-        <div class="mockup-window border bg-base-300 h-full">
+      <!-- Code SVG -->
+      <div class="flex w-1/2 flex-col gap-2">
+        <h2 class="text-lg font-semibold text-secondary">Code SVG</h2>
+        <div
+          class="mockup-window flex-1 overflow-hidden border border-secondary/20 bg-base-300"
+        >
           <pre
             id="svg-output"
-            class="p-4 text-sm text-zinc-100 bg-zinc-900 h-full w-full overflow-y-auto whitespace-pre-wrap break-words">
+            class="h-full w-full overflow-auto whitespace-pre-wrap break-words bg-zinc-900 p-4 text-sm text-zinc-100">
           </pre>
         </div>
       </div>
     </div>
 
-    <div
-      class="flex gap-2 bg-base-100 rounded-2xl p-2 border-2 border-violet-500 items-center"
-    >
-      <!-- zone normale -->
-      <div id="normal-zone" class="flex w-full items-center gap-2">
+    <!-- Barre d'interaction -->
+    <div class="border-t-2 border-primary/30 bg-base-100 p-4">
+      <div class="flex w-full items-center gap-3">
         <input
           id="user-prompt"
           type="text"
           placeholder={ui[locale].generator.placeholder}
           class="input input-bordered flex-1"
         />
-        <button id="generate-button" class="btn btn-primary"
-          >{ui[locale].generator.generateButton}</button
-        >
-
-        <button id="save-button" class="btn btn-secondary">
+        <button id="generate-button" class="btn btn-primary">
+          {ui[locale].generator.generateButton}
+        </button>
+        <button id="edit-button" class="btn btn-secondary">
+          {ui[locale].generator.editButton}
+        </button>
+        <button id="save-button" class="btn btn-accent gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
             height="20"
-            fill="white"
+            fill="currentColor"
             viewBox="0 0 30 30"
           >
             <path
               d="M23,27l-8-7l-8,7V5c0-1.105,0.895-2,2-2h12c1.105,0,2,0.895,2,2V27z"
             ></path>
           </svg>
+          Sauvegarder
         </button>
-        <button class="btn btn-secondary m-2" id="edit-button"
-          >{ui[locale].generator.editButton}</button
-        >
       </div>
     </div>
   </div>
@@ -65,12 +79,16 @@ console.log("Locale in generator:", locale);
 
 <script>
   //@ts-nocheck
+  // ========================================
+  // Imports et configuration
+
   import { createNewFavorite } from "../lib/pocketbase";
 
-  // Récupérer la locale depuis le serveur
   const locale = document.documentElement.getAttribute("data-locale") || "fr";
 
-  // Traductions côté client
+  // ========================================
+  // Traductions
+
   const translations = {
     fr: {
       promptName: "Donnez un nom à votre création :",
@@ -88,6 +106,9 @@ console.log("Locale in generator:", locale);
 
   const t = translations[locale] || translations.fr;
 
+  // ========================================
+  // Fonction génération SVG
+
   async function generateSVG(prompt) {
     console.log(prompt);
 
@@ -99,6 +120,9 @@ console.log("Locale in generator:", locale);
     return (await res.json()).svg;
   }
   let promptList = [];
+
+  // ========================================
+  // Bouton modifier
 
   const editButton = document.getElementById("edit-button");
 
@@ -137,6 +161,9 @@ console.log("Locale in generator:", locale);
     editButton.addEventListener("click", handleEdit);
   }
 
+  // ========================================
+  // Bouton générer
+
   async function handleSubmit() {
     let prompt = "";
     let aiResponse = "";
@@ -168,12 +195,18 @@ console.log("Locale in generator:", locale);
     editButton.disabled = false;
   }
 
+  // ========================================
+  // Écouteurs d'événements génération
+
   const generateButton = document.getElementById("generate-button");
   const input = document.getElementById("user-prompt");
   generateButton.addEventListener("click", handleSubmit);
   input.addEventListener("keypress", (e) => {
     if (e.key === "Enter") handleSubmit();
   });
+
+  // ========================================
+  // Récupération utilisateur
 
   const actionZone = document.getElementById("normal-zone");
   const svgOutput = document.getElementById("svg-output");
@@ -182,10 +215,10 @@ console.log("Locale in generator:", locale);
   document.body.appendChild(successDiv);
   const user = JSON.parse(localStorage.getItem("user") ?? "null");
 
-  // Fonction utilitaire pour sauvegarder le SVG
-  const saveButton = document.getElementById("save-button");
+  // ========================================
+  // Fonction sauvegarde SVG
 
-  //création de la div success
+  const saveButton = document.getElementById("save-button");
 
   async function saveSVG(params) {
     // Envoi de la requête à notre endpoint
@@ -196,7 +229,10 @@ console.log("Locale in generator:", locale);
     });
     return await res.json();
   }
-  // Gestionnaire d'événements pour le bouton de sauvegarde
+
+  // ========================================
+  // Gestionnaire bouton sauvegarde
+
   if (saveButton) {
     saveButton.addEventListener("click", async () => {
       console.log("Tentative de sauvegarde du SVG...");

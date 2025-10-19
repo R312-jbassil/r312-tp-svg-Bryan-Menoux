@@ -1,5 +1,11 @@
 ---
+// ========================================
+// Configuration et imports
+
 import Layout from "../layouts/Layout.astro";
+
+// ========================================
+// Redirection si déjà connecté
 
 if (Astro.locals.user) {
   return Astro.redirect("/");
@@ -7,112 +13,139 @@ if (Astro.locals.user) {
 ---
 
 <Layout>
-  <div
-    class="min-h-screen flex items-center justify-center bg-base-200 px-6 py-12"
-  >
-    <div class="w-full max-w-sm">
-      <div
-        class="w-full rounded-2xl border border-base-300 bg-base-100 shadow-xl p-8"
-      >
-        <div class="text-center space-y-2 mb-8">
-          <h1 class="text-3xl font-bold text-base-content">Connexion</h1>
-          <p class="text-sm text-base-content/70">
-            Accedez a votre espace SVG Lab
-          </p>
-        </div>
+  <div class="flex h-full items-center justify-center bg-base-200 p-4">
+    <div class="w-full max-w-md">
+      <div class="card bg-base-100 shadow-2xl">
+        <div class="card-body">
+          <!-- En-tête -->
+          <div class="text-center mb-6">
+            <div class="flex justify-center mb-4">
+              <div
+                class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+              >
+                <svg
+                  class="w-10 h-10 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+            <h1 class="text-3xl font-bold text-base-content">Connexion</h1>
+            <p class="text-sm text-base-content/60 mt-2">
+              Accédez à votre espace SVG Lab
+            </p>
+          </div>
 
-        <form id="login-form" class="flex flex-col gap-5 text-base-content/80">
-          <label
-            class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
+          <!-- Formulaire de connexion -->
+          <form id="login-form" class="space-y-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Email</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="nom@exemple.com"
+                required
+                class="input input-bordered w-full"
+              />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Mot de passe</span>
+              </label>
+              <input
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                required
+                class="input input-bordered w-full"
+              />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full">
+              Se connecter
+            </button>
+          </form>
+
+          <!-- Message de statut -->
+          <div
+            id="status"
+            class="text-center text-sm min-h-[1.5rem] transition-all"
           >
-            <span class="label-text text-sm text-base-content">Email</span>
-            <input
-              type="email"
-              name="email"
-              placeholder="nom@exemple.com"
-              required
-              class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
-            />
-          </label>
+          </div>
 
-          <label
-            class="form-control gap-2 rounded-xl border border-base-300 bg-base-200/60 px-4 py-3 focus-within:border-primary"
-          >
-            <span class="label-text text-sm text-base-content"
-              >Mot de passe</span
-            >
-            <input
-              type="password"
-              name="password"
-              placeholder="********"
-              required
-              class="input input-bordered rounded-lg border-none bg-transparent px-0 text-base-content placeholder:text-base-content/60 focus:outline-none focus:ring-0"
-            />
-          </label>
+          <!-- Séparateur -->
+          <div class="divider text-xs text-base-content/50">OU</div>
 
+          <!-- Connexion Google -->
           <button
-            type="submit"
-            class="btn btn-primary btn-block rounded-lg mt-2"
+            id="google-login"
+            type="button"
+            class="btn btn-outline w-full gap-2"
           >
-            Se connecter
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 256 262"
+              class="h-5 w-5"
+            >
+              <path
+                fill="#EA4335"
+                d="M255.68 133.45c0-10.57-.86-18.27-2.72-26.24H130.55v47.6h71.95c-1.45 11.85-9.28 29.73-26.7 41.75l-.24 1.6 38.79 30.05 2.69 0.27c24.7-22.8 38.44-56.3 38.44-95.03"
+              ></path>
+              <path
+                fill="#34A853"
+                d="M130.55 261.1c34.99 0 64.37-11.64 85.83-31.72l-40.89-31.64c-10.95 7.6-25.64 12.9-44.94 12.9-34.32 0-63.45-22.8-73.85-54.4l-1.52 0.13-39.99 31.06-0.52 1.47C35.48 231.54 79.92 261.1 130.55 261.1"
+              ></path>
+              <path
+                fill="#4A90E2"
+                d="M56.7 156.24c-2.75-8.12-4.35-16.8-4.35-25.74s1.6-17.62 4.23-25.74l-0.07-1.73-40.5-31.59-1.32 0.62C5.24 92.26 0 110.14 0 130.5s5.24 38.24 14.68 54.44l42.02-28.7"
+              ></path>
+              <path
+                fill="#FBBC05"
+                d="M130.55 50.5c24.34 0 40.75 10.52 50.1 19.32l36.54-35.77C194.8 12.3 165.54 0 130.55 0 79.92 0 35.48 29.56 14.68 76.06l41.96 28.7c10.47-34.3 39.59-54.26 73.91-54.26"
+              ></path>
+            </svg>
+            Continuer avec Google
           </button>
 
-          <p class="text-xs text-center text-base-content/70">
-            Pas de compte ?
-            <a class="link link-primary" href="/signup/">Creez-en un</a>.
-          </p>
-        </form>
-
-        <div class="divider text-xs uppercase text-base-content/50">ou</div>
-
-        <button
-          id="google-login"
-          type="button"
-          class="btn btn-outline btn-block gap-2 rounded-lg"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 256 262"
-            class="h-5 w-5"
-            aria-hidden="true"
-          >
-            <path
-              fill="#EA4335"
-              d="M255.68 133.45c0-10.57-.86-18.27-2.72-26.24H130.55v47.6h71.95c-1.45 11.85-9.28 29.73-26.7 41.75l-.24 1.6 38.79 30.05 2.69 0.27c24.7-22.8 38.44-56.3 38.44-95.03"
-            ></path>
-            <path
-              fill="#34A853"
-              d="M130.55 261.1c34.99 0 64.37-11.64 85.83-31.72l-40.89-31.64c-10.95 7.6-25.64 12.9-44.94 12.9-34.32 0-63.45-22.8-73.85-54.4l-1.52 0.13-39.99 31.06-0.52 1.47C35.48 231.54 79.92 261.1 130.55 261.1"
-            ></path>
-            <path
-              fill="#4A90E2"
-              d="M56.7 156.24c-2.75-8.12-4.35-16.8-4.35-25.74s1.6-17.62 4.23-25.74l-0.07-1.73-40.5-31.59-1.32 0.62C5.24 92.26 0 110.14 0 130.5s5.24 38.24 14.68 54.44l42.02-28.7"
-            ></path>
-            <path
-              fill="#FBBC05"
-              d="M130.55 50.5c24.34 0 40.75 10.52 50.1 19.32l36.54-35.77C194.8 12.3 165.54 0 130.55 0 79.92 0 35.48 29.56 14.68 76.06l41.96 28.7c10.47-34.3 39.59-54.26 73.91-54.26"
-            ></path>
-          </svg>
-          Continuer avec Google
-        </button>
-
-        <p
-          id="status"
-          class="mt-4 text-center text-sm min-h-[1.5rem] rounded-lg py-2 transition-all"
-        >
-        </p>
+          <!-- Lien inscription -->
+          <div class="text-center mt-4">
+            <p class="text-sm text-base-content/70">
+              Pas de compte ?
+              <a class="link link-primary font-semibold" href="/signup"
+                >Créez-en un</a
+              >
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <script type="module">
+  <script>
     //@ts-nocheck
+    // ========================================
+    // Imports et initialisation
+
     import pb from "../lib/pocketbase.js";
 
     localStorage.removeItem("user");
     const form = document.getElementById("login-form");
     const status = document.getElementById("status");
     const googleButton = document.getElementById("google-login");
+
+    // ========================================
+    // Fonction affichage message
 
     function setStatus(message, type) {
       status.className =
@@ -131,6 +164,9 @@ if (Astro.locals.user) {
       }
       status.textContent = message;
     }
+
+    // ========================================
+    // Formulaire de connexion
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -161,6 +197,9 @@ if (Astro.locals.user) {
       }
     });
 
+    // ========================================
+    // Finalisation session
+
     async function finalizeSession(payload) {
       const res = await fetch("/apis/login", {
         method: "POST",
@@ -172,6 +211,9 @@ if (Astro.locals.user) {
       const data = await res.json();
       localStorage.setItem("user", JSON.stringify(data.user));
     }
+
+    // ========================================
+    // Connexion Google OAuth
 
     googleButton?.addEventListener("click", async () => {
       setStatus("Connexion avec Google...", "");

@@ -1,7 +1,16 @@
 ---
+// ========================================
+// Configuration et imports
+
 import Layout from "../../layouts/Layout.astro";
 import pb from "../../lib/pocketbase";
 import { type SvgRecord } from "../../utils/pocketbase-types";
+import { ui } from "../../i18n/ui.js";
+
+// ========================================
+// Récupération des données
+
+const locale = ((Astro.locals as any).lang as "en" | "fr") ?? "fr";
 const user = Astro.locals.user;
 
 const id = Astro.params.id;
@@ -9,6 +18,9 @@ const id = Astro.params.id;
 if (!id) {
   return Astro.redirect("/gallery");
 }
+
+// ========================================
+// Chargement du SVG
 
 let svg: SvgRecord | null = null;
 try {
@@ -20,104 +32,125 @@ try {
 ---
 
 <Layout>
-  <div
-    class="flex flex-row items-stretch justify-center min-h-screen gap-6 p-6 bg-base-200"
-  >
-    <div
-      id="svg-container"
-      class="card shadow-xl bg-base-100 border-2 border-primary rounded-3xl flex items-center justify-center"
-      style="width: 45vw; height: calc(100vh - 3rem);"
-    >
-      {
-        svg ? (
-          <div class="max-w-full max-h-full" set:html={svg.code_svg} />
-        ) : (
-          <span class="text-error">SVG introuvable.</span>
-        )
-      }
+  <div class="flex h-full flex-col overflow-hidden bg-base-200">
+    <!-- En-tête -->
+    <div class="border-b-2 border-primary/30 bg-base-100 p-4">
+      <div class="flex items-center justify-between">
+        <a href="/gallery" class="btn btn-ghost"> ← Retour à ma galerie </a>
+        <div class="flex-1 text-center">
+          <h1 class="text-2xl font-bold text-primary">
+            {svg?.nom || "Mon SVG"}
+          </h1>
+          <p class="text-sm text-base-content/70">
+            Créé le {
+              svg &&
+                new Date(svg.created as string).toLocaleString(
+                  locale === "fr" ? "fr-FR" : "en-US"
+                )
+            }
+          </p>
+        </div>
+        <div class="w-[180px]"></div>
+        <!-- Spacer pour équilibrer -->
+      </div>
     </div>
 
-    <div class="flex flex-col" style="width: 45vw; height: calc(100vh - 3rem);">
-      <div
-        id="chat-history"
-        class="card shadow-xl bg-base-100 border border-base-300 rounded-t-3xl flex flex-col gap-4 flex-1 p-8 overflow-y-auto"
-      >
-        {
-          svg && svg.chat_history ? (
-            (() => {
-              try {
-                const history =
-                  typeof svg.chat_history === "string"
-                    ? JSON.parse(svg.chat_history)
-                    : svg.chat_history;
+    <!-- Contenu principal -->
+    <div class="flex flex-1 gap-4 overflow-hidden p-4">
+      <!-- Rendu SVG -->
+      <div class="flex w-1/2 flex-col gap-2">
+        <h2 class="text-lg font-semibold text-primary">Rendu SVG</h2>
+        <div
+          id="svg-container"
+          class="flex flex-1 items-center justify-center overflow-auto rounded-2xl border-2 border-primary/30 bg-base-100 p-6"
+        >
+          {
+            svg ? (
+              <div class="max-w-full max-h-full" set:html={svg.code_svg} />
+            ) : (
+              <span class="text-error">SVG introuvable.</span>
+            )
+          }
+        </div>
+      </div>
 
-                return Array.isArray(history) && history.length > 0 ? (
-                  history.map(
-                    (msg: { role: string; content: string }, idx: number) => (
-                      <div
-                        class={`chat ${msg.role === "user" ? "chat-end" : "chat-start"}`}
-                      >
-                        <div class="flex items-end gap-2">
-                          {msg.role === "user" ? null : (
-                            <div class="avatar">
-                              <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                                <img src="/favicon.svg" alt="Bot" />
-                              </div>
-                            </div>
-                          )}
-                          <div
-                            class={`chat-bubble break-words whitespace-pre-wrap max-w-full ${msg.role === "user" ? "bg-primary text-primary-content" : "bg-secondary text-secondary-content"}`}
-                          >
-                            <pre class="break-words whitespace-pre-wrap max-w-full bg-transparent border-none p-0 m-0 font-sans text-base">
-                              {msg.content}
-                            </pre>
-                          </div>
-                          {msg.role === "user" ? (
-                            <div class="avatar">
+      <!-- Historique de chat -->
+      <div class="flex w-1/2 flex-col gap-2">
+        <h2 class="text-lg font-semibold text-secondary">
+          Historique de création
+        </h2>
+        <div
+          id="chat-history"
+          class="flex-1 overflow-y-auto rounded-2xl border-2 border-secondary/30 bg-base-100 p-4 flex flex-col gap-2"
+        >
+          {
+            svg && svg.chat_history ? (
+              (() => {
+                try {
+                  const history =
+                    typeof svg.chat_history === "string"
+                      ? JSON.parse(svg.chat_history)
+                      : svg.chat_history;
+
+                  return Array.isArray(history) && history.length > 0 ? (
+                    history.map(
+                      (msg: { role: string; content: string }, idx: number) => (
+                        <div
+                          class={`chat ${msg.role === "user" ? "chat-end" : "chat-start"}`}
+                        >
+                          <div class="chat-image avatar">
+                            {msg.role === "user" ? (
                               <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                                 <img
                                   src="https://api.dicebear.com/7.x/personas/svg?seed=user"
                                   alt="User"
                                 />
                               </div>
-                            </div>
-                          ) : null}
+                            ) : (
+                              <div class="w-8 rounded-full ring ring-secondary ring-offset-base-100 ring-offset-2">
+                                <img src="/favicon.svg" alt="Bot" />
+                              </div>
+                            )}
+                          </div>
+                          <div
+                            class={`chat-bubble ${msg.role === "user" ? "chat-bubble-primary" : "chat-bubble-secondary"}`}
+                          >
+                            {msg.content}
+                          </div>
                         </div>
-                        <div class="chat-footer opacity-60 text-xs mt-1 text-right ml-10">
-                          {msg.role}
-                        </div>
-                      </div>
+                      )
                     )
-                  )
-                ) : (
-                  <span class="text-warning">
-                    Aucun historique de chat disponible.
-                  </span>
-                );
-              } catch (error) {
-                return (
-                  <span class="text-error">
-                    Erreur lors du parsing de l'historique.
-                  </span>
-                );
-              }
-            })()
-          ) : (
-            <span class="text-error">SVG introuvable ou aucun historique.</span>
-          )
-        }
+                  ) : (
+                    <span class="text-warning">
+                      Aucun historique de chat disponible.
+                    </span>
+                  );
+                } catch (error) {
+                  return (
+                    <span class="text-error">
+                      Erreur lors du parsing de l'historique.
+                    </span>
+                  );
+                }
+              })()
+            ) : (
+              <span class="text-error">Aucun historique.</span>
+            )
+          }
+        </div>
       </div>
+    </div>
 
-      <div
-        class="flex items-center gap-2 w-full bg-base-300 p-4 rounded-b-3xl shadow border-t border-base-300"
-      >
+    <!-- Barre de modification -->
+    <div class="border-t-2 border-primary/30 bg-base-100 p-4">
+      <div class="flex w-full items-center gap-3">
         <input
           id="user-prompt"
           type="text"
           placeholder="Décrivez vos modifications..."
-          class="input flex-grow"
+          class="input input-bordered flex-1"
         />
-        <button id="edit-button" class="btn btn-primary">Modifier</button>
+        <button id="edit-button" class="btn btn-primary"> Modifier </button>
       </div>
     </div>
   </div>
@@ -125,12 +158,17 @@ try {
 
 <script>
   //@ts-nocheck
+  // ========================================
+  // Initialisation
 
   let promptList = [];
   let currentSvgId = "";
 
   const pathParts = window.location.pathname.split("/");
   currentSvgId = pathParts[pathParts.length - 1];
+
+  // ========================================
+  // Fonction scroll et initialisation
 
   function scrollToBottom() {
     const chatHistory = document.getElementById("chat-history");
@@ -145,8 +183,7 @@ try {
       const chatMessages = chatHistory.querySelectorAll(".chat");
       promptList = Array.from(chatMessages).map((chat) => {
         const isUser = chat.classList.contains("chat-end");
-        const content =
-          chat.querySelector(".chat-bubble pre")?.textContent || "";
+        const content = chat.querySelector(".chat-bubble")?.textContent || "";
         return {
           role: isUser ? "user" : "assistant",
           content: content.trim(),
@@ -158,6 +195,9 @@ try {
     setTimeout(scrollToBottom, 100);
   }
 
+  // ========================================
+  // Fonction génération SVG
+
   async function generateSVG(prompt) {
     console.log("Génération SVG avec prompt:", prompt);
 
@@ -168,6 +208,9 @@ try {
     });
     return (await res.json()).svg;
   }
+
+  // ========================================
+  // Fonction sauvegarde modifications
 
   async function saveSVGEdit(svgCode, chatHistory) {
     console.log("Sauvegarde du SVG édité...");
@@ -194,42 +237,18 @@ try {
       const chatDiv = document.createElement("div");
       chatDiv.className = `chat ${msg.role === "user" ? "chat-end" : "chat-start"}`;
 
-      const avatarStart =
-        msg.role === "user"
-          ? ""
-          : `
-        <div class="avatar">
-          <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-            <img src="/favicon.svg" alt="Bot" />
-          </div>
-        </div>
-      `;
-
-      const avatarEnd =
-        msg.role === "user"
-          ? `
-        <div class="avatar">
-          <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-            <img src="https://api.dicebear.com/7.x/personas/svg?seed=user" alt="User" />
-          </div>
-        </div>
-      `
-          : "";
-
       chatDiv.innerHTML = `
-        <div class="flex items-end gap-2">
-          ${avatarStart}
-          <div class="${`chat-bubble break-words whitespace-pre-wrap max-w-full ${msg.role === "user" ? "bg-primary text-primary-content" : "bg-secondary text-secondary-content"}`}">
-            <pre class="break-words whitespace-pre-wrap max-w-full bg-transparent border-none p-0 m-0 font-sans text-base"></pre>
+        <div class="chat-image avatar">
+          <div class="w-8 rounded-full ring ring-${msg.role === "user" ? "primary" : "secondary"} ring-offset-base-100 ring-offset-2">
+            <img src="${msg.role === "user" ? "https://api.dicebear.com/7.x/personas/svg?seed=user" : "/favicon.svg"}" alt="${msg.role === "user" ? "User" : "Bot"}" />
           </div>
-          ${avatarEnd}
         </div>
-        <div class="chat-footer opacity-60 text-xs mt-1 text-right ml-10">${msg.role}</div>
+        <div class="chat-bubble ${msg.role === "user" ? "chat-bubble-primary" : "chat-bubble-secondary"}"></div>
       `;
 
-      const preElement = chatDiv.querySelector("pre");
-      if (preElement) {
-        preElement.textContent = msg.content;
+      const bubble = chatDiv.querySelector(".chat-bubble");
+      if (bubble) {
+        bubble.textContent = msg.content;
       }
 
       chatHistory.appendChild(chatDiv);

@@ -7,6 +7,7 @@ export enum Collections {
 
 export type SvgRecord = {
   name: string
+  nom: string
   code_svg: string
   chat_history: string 
   created?: string

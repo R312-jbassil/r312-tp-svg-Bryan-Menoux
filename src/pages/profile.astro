@@ -1,0 +1,403 @@
+---
+import Layout from "../layouts/Layout.astro";
+import pb from "../lib/pocketbase";
+import { ui } from "../i18n/ui.js";
+
+const locale = ((Astro.locals as any).lang as "en" | "fr") ?? "fr";
+const user = (Astro.locals as any).user;
+
+if (!user) {
+  return Astro.redirect("/login");
+}
+
+// Récupérer les informations complètes de l'utilisateur
+let userRecord: any = null;
+try {
+  userRecord = await pb.collection("users").getOne(user.id);
+} catch (error) {
+  console.error("Erreur lors de la récupération du profil:", error);
+}
+---
+
+<Layout>
+  <div class="flex h-full flex-col overflow-hidden bg-base-200">
+    <!-- Header -->
+    <div class="border-b-2 border-primary/30 bg-base-100 p-4">
+      <div class="flex items-center justify-between">
+        <a href="/gallery" class="btn btn-ghost"> ← Retour à ma galerie </a>
+        <h1 class="text-2xl font-bold text-primary">Mon Profil</h1>
+        <div class="w-[180px]"></div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex flex-1 items-center justify-center overflow-auto p-8">
+      <div class="w-full max-w-2xl">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <!-- Avatar Section -->
+            <div class="flex flex-col items-center gap-4 pb-6">
+              <div class="avatar">
+                <div
+                  class="w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-4"
+                >
+                  {
+                    userRecord?.avatar ? (
+                      <img
+                        id="avatar-preview"
+                        src={pb.files.getUrl(userRecord, userRecord.avatar)}
+                        alt="Avatar"
+                      />
+                    ) : (
+                      <img
+                        id="avatar-preview"
+                        src="https://api.dicebear.com/7.x/personas/svg?seed=user"
+                        alt="Avatar par défaut"
+                      />
+                    )
+                  }
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <label for="avatar-input" class="btn btn-primary btn-sm">
+                  Changer l'avatar
+                </label>
+                <input
+                  id="avatar-input"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                />
+                {
+                  userRecord?.avatar && (
+                    <button id="remove-avatar-btn" class="btn btn-error btn-sm">
+                      Supprimer
+                    </button>
+                  )
+                }
+              </div>
+            </div>
+
+            <!-- Information Form -->
+            <form id="profile-form" class="flex flex-col gap-4">
+              <!-- Nom -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Nom</span>
+                </label>
+                <input
+                  id="name-input"
+                  type="text"
+                  value={userRecord?.name || ""}
+                  placeholder="Votre nom"
+                  class="input input-bordered"
+                />
+              </div>
+
+              <!-- Email (lecture seule) -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Email</span>
+                </label>
+                <input
+                  type="email"
+                  value={userRecord?.email || ""}
+                  disabled
+                  class="input input-bordered input-disabled"
+                />
+                <label class="label">
+                  <span class="label-text-alt text-base-content/60">
+                    L'email ne peut pas être modifié
+                  </span>
+                </label>
+              </div>
+
+              <!-- Username -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Nom d'utilisateur</span
+                  >
+                </label>
+                <input
+                  id="username-input"
+                  type="text"
+                  value={userRecord?.username || ""}
+                  placeholder="Votre nom d'utilisateur"
+                  class="input input-bordered"
+                />
+              </div>
+
+              <!-- Boutons d'action -->
+              <div class="card-actions justify-end pt-4">
+                <button type="button" id="cancel-btn" class="btn btn-ghost">
+                  Annuler
+                </button>
+                <button type="submit" id="save-btn" class="btn btn-primary">
+                  Enregistrer les modifications
+                </button>
+              </div>
+            </form>
+
+            <!-- Section changement de mot de passe -->
+            <div class="divider"></div>
+
+            <div class="collapse collapse-arrow bg-base-200">
+              <input type="checkbox" />
+              <div class="collapse-title text-lg font-semibold">
+                Changer le mot de passe
+              </div>
+              <div class="collapse-content">
+                <form id="password-form" class="flex flex-col gap-4 pt-2">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold"
+                        >Ancien mot de passe</span
+                      >
+                    </label>
+                    <input
+                      id="old-password"
+                      type="password"
+                      placeholder="••••••••"
+                      class="input input-bordered"
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold"
+                        >Nouveau mot de passe</span
+                      >
+                    </label>
+                    <input
+                      id="new-password"
+                      type="password"
+                      placeholder="••••••••"
+                      class="input input-bordered"
+                    />
+                  </div>
+
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text font-semibold"
+                        >Confirmer le mot de passe</span
+                      >
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      class="input input-bordered"
+                    />
+                  </div>
+
+                  <button type="submit" class="btn btn-secondary">
+                    Mettre à jour le mot de passe
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast pour les notifications -->
+  <div class="toast toast-top toast-end" id="toast" style="display: none;">
+    <div class="alert alert-success">
+      <span id="toast-message">Profil mis à jour avec succès !</span>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  //@ts-nocheck
+  import PocketBase from "/lib/pocketbase-client.js";
+
+  const pb = new PocketBase(
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+      ? "http://127.0.0.1:8090"
+      : "http://tp-svg.bryan-menoux.fr:8087"
+  );
+
+  let currentUser = null;
+  let selectedAvatar = null;
+
+  function showToast(message, isError = false) {
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const alert = toast?.querySelector(".alert");
+
+    if (toast && toastMessage && alert) {
+      toastMessage.textContent = message;
+
+      if (isError) {
+        alert.classList.remove("alert-success");
+        alert.classList.add("alert-error");
+      } else {
+        alert.classList.remove("alert-error");
+        alert.classList.add("alert-success");
+      }
+
+      toast.style.display = "block";
+
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 3000);
+    }
+  }
+
+  async function loadUserData() {
+    try {
+      const authData = pb.authStore;
+      if (authData && authData.model) {
+        currentUser = await pb.collection("users").getOne(authData.model.id);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement du profil:", error);
+    }
+  }
+
+  // Gestion de l'avatar
+  const avatarInput = document.getElementById("avatar-input");
+  const avatarPreview = document.getElementById("avatar-preview");
+
+  if (avatarInput) {
+    avatarInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        selectedAvatar = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (avatarPreview) {
+            avatarPreview.src = e.target.result;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Supprimer l'avatar
+  const removeAvatarBtn = document.getElementById("remove-avatar-btn");
+  if (removeAvatarBtn) {
+    removeAvatarBtn.addEventListener("click", async () => {
+      try {
+        await pb.collection("users").update(currentUser.id, {
+          avatar: null,
+        });
+
+        if (avatarPreview) {
+          avatarPreview.src =
+            "https://api.dicebear.com/7.x/personas/svg?seed=user";
+        }
+
+        removeAvatarBtn.style.display = "none";
+        showToast("Avatar supprimé avec succès !");
+      } catch (error) {
+        console.error("Erreur lors de la suppression de l'avatar:", error);
+        showToast("Erreur lors de la suppression de l'avatar", true);
+      }
+    });
+  }
+
+  // Formulaire de profil
+  const profileForm = document.getElementById("profile-form");
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const nameInput = document.getElementById("name-input");
+      const usernameInput = document.getElementById("username-input");
+      const saveBtn = document.getElementById("save-btn");
+
+      if (saveBtn) saveBtn.disabled = true;
+
+      try {
+        const formData = new FormData();
+
+        if (nameInput?.value) {
+          formData.append("name", nameInput.value);
+        }
+
+        if (usernameInput?.value) {
+          formData.append("username", usernameInput.value);
+        }
+
+        if (selectedAvatar) {
+          formData.append("avatar", selectedAvatar);
+        }
+
+        await pb.collection("users").update(currentUser.id, formData);
+
+        showToast("Profil mis à jour avec succès !");
+        selectedAvatar = null;
+
+        await loadUserData();
+      } catch (error) {
+        console.error("Erreur lors de la mise à jour du profil:", error);
+        showToast("Erreur lors de la mise à jour du profil", true);
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    });
+  }
+
+  // Bouton annuler
+  const cancelBtn = document.getElementById("cancel-btn");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      window.location.href = "/gallery";
+    });
+  }
+
+  // Formulaire de changement de mot de passe
+  const passwordForm = document.getElementById("password-form");
+  if (passwordForm) {
+    passwordForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const oldPassword = document.getElementById("old-password");
+      const newPassword = document.getElementById("new-password");
+      const confirmPassword = document.getElementById("confirm-password");
+
+      if (newPassword?.value !== confirmPassword?.value) {
+        showToast("Les mots de passe ne correspondent pas", true);
+        return;
+      }
+
+      if (!newPassword?.value || newPassword.value.length < 8) {
+        showToast("Le mot de passe doit contenir au moins 8 caractères", true);
+        return;
+      }
+
+      try {
+        await pb.collection("users").update(currentUser.id, {
+          oldPassword: oldPassword?.value,
+          password: newPassword?.value,
+          passwordConfirm: confirmPassword?.value,
+        });
+
+        showToast("Mot de passe mis à jour avec succès !");
+
+        // Réinitialiser le formulaire
+        if (oldPassword) oldPassword.value = "";
+        if (newPassword) newPassword.value = "";
+        if (confirmPassword) confirmPassword.value = "";
+      } catch (error) {
+        console.error("Erreur lors de la mise à jour du mot de passe:", error);
+        showToast(
+          "Erreur lors de la mise à jour du mot de passe. Vérifiez votre ancien mot de passe.",
+          true
+        );
+      }
+    });
+  }
+
+  // Charger les données au démarrage
+  document.addEventListener("DOMContentLoaded", () => {
+    loadUserData();
+  });
+</script>
+```

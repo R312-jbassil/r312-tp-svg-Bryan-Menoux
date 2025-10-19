@@ -1,3 +1,6 @@
+// ========================================
+// Fonction de suppression du cookie
+
 const clearCookie = () =>
   new Response(null, {
     status: 303,
@@ -7,6 +10,9 @@ const clearCookie = () =>
       Location: "/",
     },
   });
+
+// ========================================
+// Endpoints de déconnexion
 
 export const POST = async () => clearCookie();
 export const GET = async () => clearCookie();

@@ -1,11 +1,19 @@
+// ========================================
+// Configuration et imports
+
 import pb from "../../lib/pocketbase";
 import { Collections } from "../../utils/pocketbase-types";
 
+// ========================================
+// Endpoint d'inscription
+
 export const POST = async ({ request, cookies }) => {
   try {
-    const { email, password, passwordConfirm, username } = await request.json();
+    const { email, password, passwordConfirm, name } = await request.json();
 
-    // --- VALIDATIONS ---
+    // ========================================
+    // Validation des données
+
     if (!email || !password || !passwordConfirm) {
       return new Response(
         JSON.stringify({ error: "Email et mot de passe requis." }),
@@ -20,37 +28,48 @@ export const POST = async ({ request, cookies }) => {
       );
     }
 
-    // --- NETTOYAGE SESSION COURANTE ---
+    // ========================================
+    // Création de l'utilisateur
+
     pb.authStore.clear();
 
-    // --- CRÉATION UTILISATEUR ---
     const newUser = await pb.collection(Collections.Users).create({
       email,
       password,
       passwordConfirm,
-      username: username?.trim() || email.split("@")[0],
+      name: name?.trim() || email.split("@")[0],
+      username: name?.trim() || email.split("@")[0],
     });
 
-    // --- AUTHENTIFICATION IMMÉDIATE ---
+    // ========================================
+    // Authentification immédiate
+
     const authData = await pb
       .collection(Collections.Users)
       .authWithPassword(email, password);
 
-    // --- ENREGISTREMENT DU COOKIE ---
+    // ========================================
+    // Enregistrement du cookie
+
     cookies.set("pb_auth", pb.authStore.exportToCookie(), {
       path: "/",
       httpOnly: true,
       sameSite: "strict",
-      secure: true, // important en prod HTTPS
+      secure: true,
       expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     });
 
-    // --- RÉPONSE OK ---
+    // ========================================
+    // Réponse succès
+
     return new Response(JSON.stringify({ user: authData.record }), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    // ========================================
+    // Gestion des erreurs
+
     console.error("Erreur d'inscription :", err);
 
     let message = "Impossible de créer le compte.";
